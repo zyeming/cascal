@@ -5,3 +5,4 @@ cassandra.home.unit-tests/
 out/
 lib_managed/
 project/boot/
+/bin
