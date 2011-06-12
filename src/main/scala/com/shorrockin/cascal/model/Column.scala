@@ -19,11 +19,13 @@ import com.shorrockin.cascal.utils.Utils.now
 case class Column[Owner](val name:ByteBuffer,
                          val value:ByteBuffer,
                          val time:Long,
+                         val ttl:Option[Int],
                          val owner:Owner) extends Gettable[Column[Owner]] {
 
-  def this(name:ByteBuffer, value:ByteBuffer, owner:Owner) = this(name, value, now, owner)
-  def this(name:ByteBuffer, owner:Owner) = this(name, null, now, owner)
-  def this(name:ByteBuffer, value:ByteBuffer, date:Date, owner:Owner) = this(name, value, date.getTime, owner)
+  def this(name:ByteBuffer, value:ByteBuffer, owner:Owner) = this(name, value, now, None, owner)
+  def this(name:ByteBuffer, owner:Owner) = this(name, null, now, None, owner)
+  def this(name:ByteBuffer, value:ByteBuffer, date:Date, owner:Owner) = this(name, value, date.getTime, None, owner)
+  def this(name:ByteBuffer, value:ByteBuffer, time:Long, owner:Owner) = this(name, value, time, None, owner)
 
 
   val partial  = (value == null)
@@ -54,8 +56,9 @@ case class Column[Owner](val name:ByteBuffer,
    * copy method to create a new instance of this column with a new value and
    * the same other values.
    */
-  def \(newValue:ByteBuffer) = new Column[Owner](name, newValue, time, owner)
+  def \(newValue:ByteBuffer) = new Column[Owner](name, newValue, time, ttl, owner)
 
+  def !(newTtl:Int) = new Column[Owner](name, value, time, Option(newTtl), owner)
 
   /**
    * appends a column onto this one forming a list
@@ -69,7 +72,12 @@ case class Column[Owner](val name:ByteBuffer,
    */
   def convertGetResult(colOrSuperCol:ColumnOrSuperColumn):Column[Owner] = {
     val col = colOrSuperCol.getColumn
-    Column(ByteBuffer.wrap(col.getName), ByteBuffer.wrap(col.getValue), col.getTimestamp, owner)
+    val ttl = if (col.isSetTtl) {
+      Some(col.getTtl)
+    } else {
+      None
+    }
+    Column(ByteBuffer.wrap(col.getName), ByteBuffer.wrap(col.getValue), col.getTimestamp, ttl ,owner)
   }
 
   private def stringIfPossible(a:ByteBuffer):String = {

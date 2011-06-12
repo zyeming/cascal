@@ -22,22 +22,25 @@ import com.shorrockin.cascal.utils.Utils.now
  *
  * @author Chris Shorrock
  */
-class Session(val host:Host, val defaultConsistency:Consistency, val framedTransport:Boolean) extends SessionTemplate {
+class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTransport:Boolean) extends SessionTemplate {
 
-  def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency, framedTransport:Boolean) = this(Host(host, port, timeout), defaultConsistency, framedTransport)
+  def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency, noFramedTransport:Boolean) = this(Host(host, port, timeout), defaultConsistency, noFramedTransport)
   def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency) = this(host, port, timeout, defaultConsistency, false)
   def this(host:String, port:Int, timeout:Int) = this(host, port, timeout, Consistency.One, false)
 
   private val sock = {
-    if (framedTransport) new TFramedTransport(new TSocket(host.address, host.port, host.timeout))
-    else new TSocket(host.address, host.port, host.timeout)
+    if (noFramedTransport) {
+      new TSocket(host.address, host.port, host.timeout)
+    } else {
+      new TFramedTransport(new TSocket(host.address, host.port, host.timeout))
+    }
   }
 
   private val protocol = new TBinaryProtocol(sock)
 
   var lastError: Option[Throwable] = None
 
-  val client = new Cassandra.Client(protocol, protocol)
+  val client = new Cassandra.Client(protocol)
 
   /**
    * opens the socket
@@ -162,12 +165,17 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
   def insert[E](col: Column[E], consistency: Consistency) = detect {
     verifyInsert(col)
     verifyKeyspace(col.keyspace.value)
+    
     val cassCol = new CassColumn(col.name, col.value, col.time)
-    client.insert(col.key.value, col.key.columnParent, cassCol, consistency)
+    for (ttl <- col.ttl) {
+      cassCol.setTtl(ttl)
+    }
+    
+    client.insert(col.key.value, col.owner.asInstanceOf[ColumnContainer[_, _]].columnParent, cassCol, consistency)
     col
   }
 
-
+  
   /**
    * inserts the specified column value using the default consistency
    */
@@ -232,7 +240,6 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
     val results = client.get_slice(container.key.value, container.columnParent, predicate.slicePredicate, consistency)
     container.convertListResult(convertList(results))
   }
-
 
   /**
    * performs a list of the specified container using no predicate and the default consistency.

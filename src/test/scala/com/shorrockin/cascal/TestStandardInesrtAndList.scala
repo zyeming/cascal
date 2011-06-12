@@ -11,6 +11,9 @@ class TestStandardInesrtAndList extends CassandraTestPool with Logging {
   import Assert._
   import Conversions._
 
+  val family = "Test" \ "Standard"
+  val key = family \ "testStandardFunctions"
+      
   @Test def testStandardFunctions = borrow {
     (session) =>
       import session._
@@ -18,9 +21,6 @@ class TestStandardInesrtAndList extends CassandraTestPool with Logging {
       log.debug("Cluster Name: " + clusterName)
       log.debug("Version: " + version)
       log.debug("Keyspaces: " + keyspaces.mkString("", ",", ""))
-
-      val family = "Test" \ "Standard"
-      val key = family \ "testStandardFunctions"
 
       insert(key \ "Column-1" \ "Value-1")
       insert(key \ "Column-2" \ "Value-2")
@@ -75,5 +75,21 @@ class TestStandardInesrtAndList extends CassandraTestPool with Logging {
 
 
   }
+  
+  @Test def insertGetWithTTL = borrow {
+    (session) =>
+      import session._
 
+      insert(key \ "Column-1" \ "Value-1" ! 1)
+
+      val column = get(key \ "Column-1")
+      assertEquals("Value-1", string(column.get.value))
+      assertEquals("Column-1", string(column.get.name))
+      assertEquals(Some(1), column.get.ttl)
+      
+      Thread.sleep(2000);
+      
+      val expiredCol = get(key \ "Column-1")
+      assertTrue(expiredCol.isEmpty)
+  }
 }
