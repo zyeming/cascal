@@ -3,6 +3,7 @@ package com.shorrockin.cascal.utils
 import _root_.scala.io.Source
 import java.io.{FileWriter, InputStream, FileOutputStream, File}
 import java.util.concurrent.TimeUnit
+import java.net.URI
 
 /**
  * common utility functions that don't fit elsewhere.
@@ -40,13 +41,16 @@ object Utils extends Logging {
         len = is.read(buf, 0, buf.length)
         if (-1 != len) out.write(buf, 0, len)
       }
-      out.flush
     }
 
     file
   }
 
-
+  def toURI(fileName: String): URI = {
+    val file = new File(fileName)
+    file.toURI
+  }
+  
   /**
    * replaces all instances of the specified token with the specified replacement
    * file in the source file.
@@ -58,9 +62,10 @@ object Utils extends Logging {
       current
     }
 
+    val lineSeparator = System.getProperty("line.separator")
     val writer = new FileWriter(file)
     manage(writer) {
-      contents.foreach { writer.write(_) }
+      contents.foreach {x: String => writer.write(x + lineSeparator) }
       writer.flush
     }
 

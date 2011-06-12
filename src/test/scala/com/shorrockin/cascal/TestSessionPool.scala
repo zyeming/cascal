@@ -9,10 +9,13 @@ class TestSessionPool {
   import Conversions._
   import Assert._
 
+  val host = "localhost"
+  val port = 9162
+    
   @Test def testSessionPool = {
     EmbeddedTestCassandra.init
-
-    val hosts  = Host("localhost", 9160, 250) :: Host("localhost", 9161, 1)
+    
+    val hosts  = Host(host, port, 250) :: Host(host, port+1, 250)
     val params = new PoolParams(10, ExhaustionPolicy.Fail, 500L, 6, 2)
     val pool   = new SessionPool(hosts, params, Consistency.One)
 
@@ -29,7 +32,7 @@ class TestSessionPool {
   @Test def testErrorCatchingAndLogging = {
     EmbeddedTestCassandra.init
 
-    val hosts  = Host("localhost", 9160, 250) :: Nil
+    val hosts  = Host(host, port, 250) :: Nil
     val params = new PoolParams(10, ExhaustionPolicy.Fail, 500L, 6, 2)
     val pool   = new SessionPool(hosts, params, Consistency.One)
 

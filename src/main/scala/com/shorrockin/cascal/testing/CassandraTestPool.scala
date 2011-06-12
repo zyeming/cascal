@@ -1,14 +1,16 @@
-// TODO Need to update this for Cassandra 0.7
-
 package com.shorrockin.cascal.testing
 
 import org.apache.cassandra.thrift.CassandraDaemon
 import org.apache.cassandra.config.DatabaseDescriptor
 import java.io.File
+import scala.collection.JavaConversions._
+import java.util.{Collection => JCollection}
 import java.net.ConnectException
 import org.apache.thrift.transport.{TTransportException, TSocket}
 import com.shorrockin.cascal.session._
 import com.shorrockin.cascal.utils.{Utils, Logging}
+import org.apache.cassandra.config.KSMetaData
+import org.apache.cassandra.config.CFMetaData
 /**
  * trait which mixes in the functionality necessary to embed
  * cassandra into a unit test
@@ -27,7 +29,9 @@ object EmbeddedTestCassandra extends Logging {
   import Utils._
   var initialized = false
 
-  val hosts  = Host("localhost", 9160, 250) :: Nil
+  val port = 9162
+  val host = "localhost"
+  val hosts  = Host(host, port, 250) :: Nil
   val params = new PoolParams(10, ExhaustionPolicy.Fail, 500L, 6, 2)
   lazy val pool = new SessionPool(hosts, params, Consistency.One)
 
@@ -40,17 +44,21 @@ object EmbeddedTestCassandra extends Logging {
       log.debug("creating cassandra instance at: " + homeDirectory.getCanonicalPath)
       log.debug("copying cassandra configuration files to root directory")
 
-      val fileSep     = System.getProperty("file.separator")
-      val storageFile = new File(homeDirectory, "storage-conf.xml")
-      val logFile     = new File(homeDirectory, "log4j.properties")
+      val fileSep = System.getProperty("file.separator")
+      val storageFile = new File(homeDirectory, "cassandra.yaml")
+      val logFile = new File(homeDirectory, "log4j.properties")
 
-      replace(copy(resource("/storage-conf.xml"), storageFile), ("%temp-dir%" -> (homeDirectory.getCanonicalPath + fileSep)))
+      replace(copy(resource("/cassandra.yaml"), storageFile), ("%temp-dir%" -> (homeDirectory.getCanonicalPath + fileSep)))
       copy(resource("/log4j.properties"), logFile)
 
-      System.setProperty("storage-config", homeDirectory.getCanonicalPath)
+      System.setProperty("cassandra.config", toURI(homeDirectory.getCanonicalPath + fileSep + "cassandra.yaml").toString)
+      System.setProperty("log4j.configuration", toURI(homeDirectory.getCanonicalPath + fileSep + "log4j.properties").toString);
+      System.setProperty("cassandra-foreground","true");
 
       log.debug("creating data file and log location directories")
       DatabaseDescriptor.getAllDataFileLocations.foreach { (file) => new File(file).mkdirs }
+      
+      loadSchema()
       // new File(DatabaseDescriptor.getLogFileLocation).mkdirs
 
       val daemon = new CassandraDaemonThread
@@ -58,7 +66,7 @@ object EmbeddedTestCassandra extends Logging {
 
       // try to make sockets until the server opens up - there has to be a better
       // way - just not sure what it is.
-      val socket = new TSocket("localhost", 9160);
+      val socket = new TSocket(host, port);
       var opened = false
       while (!opened) {
         try {
@@ -75,6 +83,15 @@ object EmbeddedTestCassandra extends Logging {
     }
   }
 
+  def loadSchema() = {
+    for(ksMetaData: KSMetaData <- DatabaseDescriptor.readTablesFromYaml) {
+      for (cfMetaData <- ksMetaData.cfMetaData().values()) 
+        CFMetaData.map(cfMetaData)
+        
+      DatabaseDescriptor.setTableDefinition(ksMetaData, DatabaseDescriptor.getDefsVersion())
+    }
+  }
+  
   private def resource(str:String) = classOf[CassandraTestPool].getResourceAsStream(str)
 }
 
