@@ -6,3 +6,7 @@ out/
 lib_managed/
 project/boot/
 /bin
+/.scala_dependencies
+/.project
+/.classpath
+/.settings
