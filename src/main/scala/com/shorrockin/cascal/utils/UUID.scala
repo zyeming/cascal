@@ -2,6 +2,7 @@ package com.shorrockin.cascal.utils
 
 import java.util.{UUID => JavaUUID}
 import _root_.com.eaio.uuid.{UUID => EaioUUID}
+import java.nio.ByteBuffer
 
 /**
  * utility method for working with, and creating uuids, suitable in a way
@@ -17,6 +18,9 @@ object UUID {
    */
   def apply() = JavaUUID.fromString(new EaioUUID().toString());
 
+  def apply(data: ByteBuffer):JavaUUID = {
+    apply(data.array)
+  }
   /**
    * returns a new uuid based on the specified string
    */

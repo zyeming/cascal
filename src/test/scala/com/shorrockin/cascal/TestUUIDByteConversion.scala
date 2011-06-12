@@ -16,7 +16,7 @@ class TestUUIDByteConversion extends CassandraTestPool {
 
   @Test def ensureUUIDConvertsToFromBytes = {
     val original = UUID()
-    assertEquals(original, UUID(Conversions.bytes(original)))
+    assertEquals(original, UUID(Conversions.byteBuffer(original)))
   }
 
   @Test def ensureUUIDConvertsToStringAndBack = {

@@ -102,14 +102,14 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
    */
   private def getFieldSerialized[T](fieldType:Class[_], fieldGetter:Method, obj:T):ByteBuffer = {
     // Couldn't figure out how to case match classes on a class obj with type erasure
-    if (fieldType == classOf[String]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[String])
-    else if (fieldType == classOf[UUID]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[UUID])
-    else if (fieldType == classOf[Int]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Int])
-    else if (fieldType == classOf[Long]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Long])
-    else if (fieldType == classOf[Boolean]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Boolean])
-    else if (fieldType == classOf[Float]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Float])
-    else if (fieldType == classOf[Double]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Double])
-    else if (fieldType == classOf[Date]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Date])
+    if (fieldType == classOf[String]) Conversions.byteBuffer(fieldGetter.invoke(obj).asInstanceOf[String])
+    else if (fieldType == classOf[UUID]) Conversions.byteBuffer(fieldGetter.invoke(obj).asInstanceOf[UUID])
+    else if (fieldType == classOf[Int]) Conversions.byteBuffer(fieldGetter.invoke(obj).asInstanceOf[Int])
+    else if (fieldType == classOf[Long]) Conversions.byteBuffer(fieldGetter.invoke(obj).asInstanceOf[Long])
+    else if (fieldType == classOf[Boolean]) Conversions.byteBuffer(fieldGetter.invoke(obj).asInstanceOf[Boolean])
+    else if (fieldType == classOf[Float]) Conversions.byteBuffer(fieldGetter.invoke(obj).asInstanceOf[Float])
+    else if (fieldType == classOf[Double]) Conversions.byteBuffer(fieldGetter.invoke(obj).asInstanceOf[Double])
+    else if (fieldType == classOf[Date]) Conversions.byteBuffer(fieldGetter.invoke(obj).asInstanceOf[Date])
     else throw new IllegalStateException("Type %s of getter %s is unknown".format(fieldGetter.getName, fieldType.toString))
   }
 
@@ -122,14 +122,14 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
     val opt = fieldGetter.invoke(obj).asInstanceOf[Option[_]]
     opt match {
       case None => null
-      case Some(x:String) => Conversions.bytes(x)
-      case Some(x:UUID) => Conversions.bytes(x)
-      case Some(x:Int) => Conversions.bytes(x)
-      case Some(x:Long) => Conversions.bytes(x)
-      case Some(x:Boolean) => Conversions.bytes(x)
-      case Some(x:Float) => Conversions.bytes(x)
-      case Some(x:Double) => Conversions.bytes(x)
-      case Some(x:Date) => Conversions.bytes(x)
+      case Some(x:String) => Conversions.byteBuffer(x)
+      case Some(x:UUID) => Conversions.byteBuffer(x)
+      case Some(x:Int) => Conversions.byteBuffer(x)
+      case Some(x:Long) => Conversions.byteBuffer(x)
+      case Some(x:Boolean) => Conversions.byteBuffer(x)
+      case Some(x:Float) => Conversions.byteBuffer(x)
+      case Some(x:Double) => Conversions.byteBuffer(x)
+      case Some(x:Date) => Conversions.byteBuffer(x)
       case _ => throw new IllegalStateException(
           "Type of Option %s for getter %s is unknown".format(opt.toString, fieldGetter.getName))
     }
@@ -181,8 +181,8 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
 
       if (columnName == null || value == null) acc
       else info.isSuper match {
-        case true => (info.family.asInstanceOf[SuperColumnFamily] \ key \ superCol \ (Conversions.bytes(columnName), value)) :: acc
-        case false => (info.family.asInstanceOf[StandardColumnFamily] \ key \ (Conversions.bytes(columnName), value)) :: acc
+        case true => (info.family.asInstanceOf[SuperColumnFamily] \ key \ superCol \ (Conversions.byteBuffer(columnName), value)) :: acc
+        case false => (info.family.asInstanceOf[StandardColumnFamily] \ key \ (Conversions.byteBuffer(columnName), value)) :: acc
       }
     }
   }
@@ -208,7 +208,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
    * returns the column with the specified name, or
    */
   private def find(name:String, columns:Seq[Column[_]]):Option[Column[_]] = {
-    val nameBytes = Conversions.bytes(name)
+    val nameBytes = Conversions.byteBuffer(name)
     columns.find { (c) => nameBytes.equals(c.name) }
   }
 
@@ -224,7 +224,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
         // TODO sure there's a better way - without this you end up with:
         //   "value asInstanceOf is not a member of ?"
         val castedSerial = s.asInstanceOf[Serializer[Any]]
-        (castedSerial.fromBytes(bytes)).asInstanceOf[A]
+        (castedSerial.fromByteBuffer(bytes)).asInstanceOf[A]
     }
   }
 

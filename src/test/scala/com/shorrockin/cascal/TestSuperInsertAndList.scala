@@ -4,6 +4,7 @@ import testing._
 import model.{Column, SuperColumn}
 import org.junit.{Test, Assert}
 import utils.{UUID, Conversions, Logging}
+import java.nio.ByteBuffer
 
 class TestSuperInsertAndList extends CassandraTestPool with Logging {
   import Assert._
@@ -101,10 +102,10 @@ class TestSuperInsertAndList extends CassandraTestPool with Logging {
   }
 
 
-  def locate(l: Seq[(SuperColumn, Seq[Column[_]])], value: Array[Byte]): Seq[Column[_]] = {
+  def locate(l: Seq[(SuperColumn, Seq[Column[_]])], value: ByteBuffer): Seq[Column[_]] = {
     l.foreach {
       (tuple) =>
-        if (java.util.Arrays.equals(tuple._1.value, value)) {
+        if (java.util.Arrays.equals(tuple._1.value.array, value.array)) {
           return tuple._2
         }
     }

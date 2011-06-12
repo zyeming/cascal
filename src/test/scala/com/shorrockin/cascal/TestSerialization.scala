@@ -86,29 +86,35 @@ class TestSerialization {
     assertEquals("Bar", objects(1).value.get)
   }
 
-  @Test def testCanConvertFromColumnsToMappedSuper() {
+  @Test def convertFromColumnsToMappedSuper() {
     val now  = new Date
     val key  = "Test" \\ "Super" \ "Hello"
     val sc   = key \ "Super Column Value"
     val colb = sc \ "Column-B" \ now
     val colc = sc \ "Column-C" \ 12L
-    val cold = sc \ "Column-D" \ 13L
 
     val obj = Converter[MappedSuper](colc :: colb)
     assertEquals("Hello", obj.a)
     assertEquals("Super Column Value", obj.s)
     assertEquals(now, obj.b)
-    assertEquals(12L, obj.c)    
+    assertEquals(12L, obj.c)
+  }
 
-    val obj2 = Converter[MappedSuperWithCols](colc :: cold)
-    assertEquals("Hello", obj.a)
-    assertEquals("Super Column Value", obj.s)
+  @Test def convertFromColumnsToMappedSuperWithCols() {
+    val now  = new Date
+    val key  = "Test" \\ "Super" \ "Hello"
+    val sc   = key \ "Super Column Value"
+    val cold = sc \ "Column-C" \ 12L
+    val cole = sc \ "Column-D" \ 13L
+    
+    val obj2 = Converter[MappedSuperWithCols](cold :: cole)
+    assertEquals("Hello", obj2.a)
+    assertEquals("Super Column Value", obj2.s)
     assertTrue(obj2.values.contains("Column-C"));
     assertTrue(obj2.values.contains("Column-D"));
 
   }
-
-
+  
   @Test def testCanConvertObjectToStandardColumnList() {
   }
 

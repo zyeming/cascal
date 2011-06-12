@@ -56,7 +56,7 @@ class TestMultiKeyList extends CassandraTestPool {
     assertEquals(2, locate(results, key3).size)
 
     // try out a column predicate
-    val columns = List(bytes("col-1"), bytes("col-2"))
+    val columns = List(byteBuffer("col-1"), byteBuffer("col-2"))
     results = session.list(key1 :: key2 :: key3, ColumnPredicate(columns))
     assertEquals(3, results.size)
     assertEquals(2, locate(results, key1).size)
