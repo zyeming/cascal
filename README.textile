@@ -1,16 +1,6 @@
 h3. Project Status
 
-I am no longer actively developing Cascal due to some work changes and the non-existence of free-time at this point in my life. This is not to say I won't return to this project at some point in the future, however I can make no current commitments to quality on this. If you would like to fork and continue the project please feel free to do so. If you happen to do so, let me know and I'll link to your fork from this page. Cheers.
-
-h3. Cascal - Cassandra Simplified
-
-|_. Primary Author|Chris Shorrock|
-|_. Home Page|"http://wiki.github.com/shorrockin/cascal/":http://wiki.github.com/shorrockin/cascal/|
-|_. API Doc|"http://shorrockin.com/cascal/scaladocs/":http://shorrockin.com/cascal/scaladocs/|
-|_. Stable Version|1.2 (Scala 2.7.7)|
-|_. Snapshot Version|1.3-SNAPSHOT (Scala 2.8.0)|
-|_. Cassandra Version|0.6.1|
-
+Cascal fork with support for Cassandra 0.7 with column TTL and Secondary Indexes
 
 h3. Description:
 
@@ -24,25 +14,3 @@ Cascal is a simple "Cassandra":http://cassandra.apache.org/ library built on the
 One of the goals of Cassandra is to make the Thrift library operate in a way more conducive with the Scala language. As such when using Cascal you only need to used the Cascal libraries.
 
 Please see the "wiki pages":http://wiki.github.com/shorrockin/cascal/ for detailed usage information.
-
-h3. Maven Information
-
-<pre>
-<code class="xml">
-  <dependencies>
-    <dependency>
-      <groupId>com.shorrockin</groupId>
-      <artifactId>cascal</artifactId>
-      <version>1.3-SNAPSHOT</version>
-    </dependency>
-  </dependencies>
-
-  <repositories>
-    <repository>
-      <id>shorrockin.com</id>
-      <name>Shorrockin Repository</name>
-      <url>http://maven.shorrockin.com/</url>
-    </repository>
-  </repositories>
-</code>
-</pre>
