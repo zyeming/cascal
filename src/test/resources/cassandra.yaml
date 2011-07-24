@@ -459,3 +459,15 @@ keyspaces:
           column_type: Super
           compare_with: BytesType
           compare_subcolumns_with: BytesType
+          
+        - name: StandardIndexed
+          compare_with: BytesType
+          column_metadata:
+            - name: column1
+              validator_class: BytesType
+              index_name: column1_index
+              index_type: KEYS
+            - name: longColumn
+              validator_class: LongType
+              index_name: longColumn_index
+              index_type: KEYS

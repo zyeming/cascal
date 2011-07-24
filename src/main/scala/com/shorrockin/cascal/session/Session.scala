@@ -334,7 +334,23 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
     list(family, range, EmptyPredicate, defaultConsistency)
   }
 
+  
+  def list[ColumnType, ListType](query: IndexQuery): Map[StandardKey, Seq[Column[StandardKey]]] = list(query, EmptyPredicate, defaultConsistency)
+  
+  def list[ColumnType, ListType](query: IndexQuery, predicate: Predicate, consistency: Consistency): Map[StandardKey, Seq[Column[StandardKey]]] = detect {
+    val family: ColumnFamily[StandardKey] = query.family
+    verifyKeyspace(family.keyspace.value)
+    val results = client.get_indexed_slices(query.family.columnParent, query.indexClause, predicate.slicePredicate, consistency)
+        
+    var map = Map[StandardKey, Seq[Column[StandardKey]]]()
 
+    convertList(results).foreach { (keyslice) =>
+      val key = (family \ keyslice.key)
+      map = map + (key -> key.convertListResult(keyslice.columns))
+    }
+    map
+  }
+    
   /**
    * performs the specified seq of operations in batch. assumes all operations belong
    * to the same keyspace. If they do not then the first keyspace in the first operation
