@@ -8,7 +8,9 @@ import scala.collection.JavaConversions._
 
 case class IndexExpression(val columnName: ByteBuffer, val operator: ThriftOperator, val value: ByteBuffer)
 
-case class IndexQuery(val family: ColumnFamily[StandardKey], val expressions: List[IndexExpression], val startKey: ByteBuffer) {
+case class IndexQuery(val family: ColumnFamily[StandardKey], val expressions: List[IndexExpression],
+    val startKey: ByteBuffer, val limit: Int = 100) {
+  
   val indexClause = new IndexClause();
   
   implicit def CascalIndexExpression(expression: IndexExpression): CassIndexExpression =
@@ -20,6 +22,9 @@ case class IndexQuery(val family: ColumnFamily[StandardKey], val expressions: Li
   var ex = CascalIndexExpressionList(expressions)
   indexClause.setExpressions(ex)
   indexClause.setStart_key(startKey)
+  indexClause.setCount(limit)
+  
+  def limit(limit: Int) = IndexQuery(family, expressions, startKey, limit)
 }
 
 object IndexQuery {

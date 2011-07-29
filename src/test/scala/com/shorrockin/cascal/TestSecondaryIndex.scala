@@ -87,4 +87,17 @@ class TestSeconderyIndex extends CassandraTestPool {
     assertEquals(2, rows.size)
   }
   
+  @Test def limitNumberOfResult = borrow { (session) =>
+    
+    session.insert(key1 \ "column1" \ "b")
+    session.insert(key1 \ "column2" \ "a")
+    
+    session.insert(key2 \ "column1" \ "b")
+    session.insert(key2 \ "column2" \ "b")
+        
+    val query = family where "column1" Eq "b" and "column2" Lte "b" startAt "a" limit 1
+    val rows = session.list(query)
+    assertEquals(1, rows.size)
+  }
+  
 }
