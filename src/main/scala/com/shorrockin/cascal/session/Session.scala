@@ -165,13 +165,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
   def insert[E](col: Column[E], consistency: Consistency) = detect {
     verifyInsert(col)
     verifyKeyspace(col.keyspace.value)
-    
-    val cassCol = new CassColumn(col.name, col.value, col.time)
-    for (ttl <- col.ttl) {
-      cassCol.setTtl(ttl)
-    }
-    
-    client.insert(col.key.value, col.owner.asInstanceOf[ColumnContainer[_, _]].columnParent, cassCol, consistency)
+    client.insert(col.key.value, col.owner.asInstanceOf[ColumnContainer[_, _]].columnParent, col.cassandraColumn, consistency)
     col
   }
 

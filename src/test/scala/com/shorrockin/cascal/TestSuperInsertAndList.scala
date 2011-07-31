@@ -1,6 +1,5 @@
 package com.shorrockin.cascal
 
-import testing._
 import model.{Column, SuperColumn}
 import org.junit.{Test, Assert}
 import utils.{UUID, Conversions, Logging}

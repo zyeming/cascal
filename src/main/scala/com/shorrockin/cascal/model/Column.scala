@@ -44,9 +44,9 @@ case class Column[Owner](val name:ByteBuffer,
   lazy val columnOrSuperColumn = {
     val cosc = new ColumnOrSuperColumn
     owner match {
-      case key:StandardKey => cosc.setColumn(new CassColumn(name, value, time))
+      case key:StandardKey => cosc.setColumn(cassandraColumn())
       case sup:SuperColumn =>
-        val list = Conversions.toJavaList(new CassColumn(name, value, time) :: Nil)
+        val list = Conversions.toJavaList(cassandraColumn() :: Nil)
         cosc.setSuper_column(new CassSuperColumn(sup.value, list))
     }
   }
@@ -85,6 +85,16 @@ case class Column[Owner](val name:ByteBuffer,
     if (a.array.length <= 4) return "Array (" + a.array.mkString(", ") + ")"
     if (a.array.length > 1000) return a.array.toString
     try { Conversions.string(a) } catch { case _ => a.array.toString }
+  }
+  
+  def cassandraColumn(): CassColumn = {
+    val cassCol = new CassColumn(name)
+    cassCol.setValue(value)
+    cassCol.setTimestamp(time)
+    for (timeToLive <- ttl) {
+      cassCol.setTtl(timeToLive)
+    }
+    cassCol
   }
 
   override def toString():String = "%s \\ Column(name = %s, value = %s, time = %s)".format(

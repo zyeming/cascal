@@ -1,4 +1,4 @@
-package com.shorrockin.cascal.testing
+package com.shorrockin.cascal
 
 import org.apache.cassandra.thrift.CassandraDaemon
 import org.apache.cassandra.config.DatabaseDescriptor
@@ -9,8 +9,8 @@ import java.net.ConnectException
 import org.apache.thrift.transport.{TTransportException, TSocket}
 import com.shorrockin.cascal.session._
 import com.shorrockin.cascal.utils.{Utils, Logging}
-import org.apache.cassandra.config.KSMetaData
-import org.apache.cassandra.config.CFMetaData
+import org.apache.cassandra.config.{CFMetaData, KSMetaData}
+
 /**
  * trait which mixes in the functionality necessary to embed
  * cassandra into a unit test
@@ -25,7 +25,7 @@ trait CassandraTestPool extends Logging {
 /**
  * maintains the single instance of the cassandra server
  */
-object EmbeddedTestCassandra extends Logging {
+object EmbeddedTestCassandra extends Logging with Schema {
   import Utils._
   var initialized = false
 
@@ -58,9 +58,8 @@ object EmbeddedTestCassandra extends Logging {
       log.debug("creating data file and log location directories")
       DatabaseDescriptor.getAllDataFileLocations.foreach { (file) => new File(file).mkdirs }
       
-      loadSchema()
-      // new File(DatabaseDescriptor.getLogFileLocation).mkdirs
-
+      loadSchema
+      
       val daemon = new CassandraDaemonThread
       daemon.start
 
@@ -82,16 +81,7 @@ object EmbeddedTestCassandra extends Logging {
       initialized = true
     }
   }
-
-  def loadSchema() = {
-    for(ksMetaData: KSMetaData <- DatabaseDescriptor.readTablesFromYaml) {
-      for (cfMetaData <- ksMetaData.cfMetaData().values()) 
-        CFMetaData.map(cfMetaData)
-        
-      DatabaseDescriptor.setTableDefinition(ksMetaData, DatabaseDescriptor.getDefsVersion())
-    }
-  }
-  
+    
   private def resource(str:String) = classOf[CassandraTestPool].getResourceAsStream(str)
 }
 

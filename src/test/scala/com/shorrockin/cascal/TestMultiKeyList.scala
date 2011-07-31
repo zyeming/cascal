@@ -1,7 +1,6 @@
 package com.shorrockin.cascal
 
 import model._
-import testing._
 import org.junit.{Assert, Test}
 import session.{Session, ColumnPredicate, Order, RangePredicate}
 import utils.{UUID, Conversions}

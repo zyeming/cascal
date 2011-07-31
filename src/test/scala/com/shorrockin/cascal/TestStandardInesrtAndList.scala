@@ -1,6 +1,5 @@
 package com.shorrockin.cascal
 
-import testing._
 import model.Column
 import org.junit.{Assert, Test}
 import java.util.Date

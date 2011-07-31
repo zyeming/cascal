@@ -2,7 +2,6 @@ package com.shorrockin.cascal
 
 import serialization.annotations._
 import serialization.Converter
-import testing._
 import org.junit.{Assert, Test}
 import utils.{UUID, Conversions}
 import java.util.{UUID => JavaUUID, Date}

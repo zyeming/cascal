@@ -1,6 +1,6 @@
 h3. Project Status
 
-Cascal fork with support for Cassandra 0.7 with column TTL and Secondary Indexes
+Cascal fork with support for Cassandra 0.8
 
 h3. Description:
 
