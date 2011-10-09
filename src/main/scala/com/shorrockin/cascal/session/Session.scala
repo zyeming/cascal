@@ -144,6 +144,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
    *  returns the column value for the specified column
    */
   def get[ResultType](col: Gettable[ResultType], consistency: Consistency): Option[ResultType] = detect {
+    verifyKeyspace(col.keyspace.value)
     try {
       val result = client.get(ByteBuffer.wrap(col.key.value.getBytes("UTF-8")), col.columnPath, consistency)
       Some(col.convertGetResult(result))
