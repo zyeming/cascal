@@ -201,6 +201,10 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
   def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange):Map[Key[ColumnType, ListType], ListType] = borrow { _.list(family, range) }
 
+  def list[ColumnType, ListType](query: IndexQuery): Map[StandardKey, Seq[Column[StandardKey]]] = borrow { _.list(query) }
+  
+  def list[ColumnType, ListType](query: IndexQuery, predicate: Predicate, consistency: Consistency): Map[StandardKey, Seq[Column[StandardKey]]] = borrow { _.list(query, predicate, consistency) }
+    
   def batch(ops:Seq[Operation], consistency:Consistency):Unit = borrow { _.batch(ops, consistency) }
 
   def batch(ops:Seq[Operation]):Unit = borrow { _.batch(ops) }

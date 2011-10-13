@@ -150,7 +150,10 @@ trait SessionTemplate {
    */
   def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange):Map[Key[ColumnType, ListType], ListType]
 
-
+  def list[ColumnType, ListType](query: IndexQuery): Map[StandardKey, Seq[Column[StandardKey]]]
+  
+  def list[ColumnType, ListType](query: IndexQuery, predicate: Predicate, consistency: Consistency): Map[StandardKey, Seq[Column[StandardKey]]]
+    
   /**
    * performs the specified seq of operations in batch. assumes all operations belong
    * to the same keyspace. If they do not then the first keyspace in the first operation
