@@ -15,5 +15,4 @@ class InsertGetTest extends CassandraTestPool {
     session.insert(col \ "col value")
     assertEquals("col value", string(session.get(col).get.value))
   }
-
-}
+} 	

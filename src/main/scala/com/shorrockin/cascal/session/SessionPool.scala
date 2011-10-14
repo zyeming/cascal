@@ -163,6 +163,8 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
   def keyspaces:Seq[String] = borrow { _.keyspaces }
 
+  def truncate(cfname: String) = borrow { _.truncate(cfname) }
+  
   def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType] = borrow { _.get(col, consistency) }
 
   def get[ResultType](col:Gettable[ResultType]):Option[ResultType] = borrow { _.get(col) }

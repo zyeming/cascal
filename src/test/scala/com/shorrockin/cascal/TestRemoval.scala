@@ -31,4 +31,13 @@ class TestRemoval extends CassandraTestPool {
     assertEquals(None, s.get(std))
     assertEquals(None, s.get(sup))
   }
+  
+  @Test def testTruncate = borrow { (s) =>
+    val col  = "Test" \ "Standard" \ UUID() \ "Column"
+    val std = s.insert(col \ "Value")
+    assertEquals("Value", new String(s.get(col).get.value.array))
+    s.truncate("Standard")
+    
+    assertEquals(None, s.get(col))
+  }
 }

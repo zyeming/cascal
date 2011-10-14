@@ -10,6 +10,7 @@ import org.apache.thrift.transport.{TTransportException, TSocket}
 import com.shorrockin.cascal.session._
 import com.shorrockin.cascal.utils.{Utils, Logging}
 import org.apache.cassandra.config.{CFMetaData, KSMetaData}
+import org.apache.cassandra.db.commitlog.CommitLog
 
 /**
  * trait which mixes in the functionality necessary to embed
@@ -31,7 +32,7 @@ object EmbeddedTestCassandra extends Logging with Schema {
 
   val port = 9162
   val host = "localhost"
-  val hosts  = Host(host, port, 250) :: Nil
+  val hosts  = Host(host, port, 1000) :: Nil
   val params = new PoolParams(10, ExhaustionPolicy.Fail, 500L, 6, 2)
   lazy val pool = new SessionPool(hosts, params, Consistency.One)
 
@@ -57,6 +58,7 @@ object EmbeddedTestCassandra extends Logging with Schema {
 
       log.debug("creating data file and log location directories")
       DatabaseDescriptor.getAllDataFileLocations.foreach { (file) => new File(file).mkdirs }
+      CommitLog.instance.resetUnsafe
       
       loadSchema
       

@@ -139,7 +139,10 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
     }
   }
 
-
+  def truncate(cfname: String) = {
+    client.truncate(cfname)
+  }
+  
   /**
    *  returns the column value for the specified column
    */

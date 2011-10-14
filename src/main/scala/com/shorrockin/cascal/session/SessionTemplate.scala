@@ -28,7 +28,8 @@ trait SessionTemplate {
    */
   def keyspaces:Seq[String]
 
-
+  def truncate(cfname: String)
+  
   /**
    *  returns the column value for the specified column
    */
