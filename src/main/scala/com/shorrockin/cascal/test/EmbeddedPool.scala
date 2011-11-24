@@ -13,6 +13,7 @@ import org.apache.cassandra.config.{CFMetaData, KSMetaData}
 import org.junit.AfterClass
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import org.apache.cassandra.config.Schema
 
 /**
  * trait which mixes in the functionality necessary to embed
@@ -97,10 +98,9 @@ object EmbeddedCassandraServer extends Logging {
   private def resource(str:String) = classOf[EmbeddedPool].getResourceAsStream(str)
   
   private def loadSchema(ksMetaData: KSMetaData) = {
-    for (cfMetaData <- ksMetaData.cfMetaData().values()) 
-      CFMetaData.map(cfMetaData)
-        
-    DatabaseDescriptor.setTableDefinition(ksMetaData, DatabaseDescriptor.getDefsVersion())
+    val ksList = new java.util.ArrayList[KSMetaData]()
+    ksList.add(ksMetaData)
+    Schema.instance.load(ksList, Schema.instance.getVersion)
   }
   
   def shutdown {

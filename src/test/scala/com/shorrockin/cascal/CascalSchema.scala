@@ -19,8 +19,8 @@ trait CascalSchema extends Schema {
   val strategyClass = classOf[SimpleStrategy]
   
   val colMetaData = Map[ByteBuffer, ColumnDefinition](
-    byteBuffer("column1") -> new ColumnDefinition("column1", BytesType.instance, IndexType.KEYS, null),
-    byteBuffer("longColumn") -> new ColumnDefinition("longColumn", LongType.instance, IndexType.KEYS, null))
+    byteBuffer("column1") -> new ColumnDefinition("column1", BytesType.instance, IndexType.KEYS, null, "column1Indx"),
+    byteBuffer("longColumn") -> new ColumnDefinition("longColumn", LongType.instance, IndexType.KEYS, null, "longColumnIndx"))
     
   val standardIndexedCf = cfMetaData("StandardIndexed", ColumnFamilyType.Standard, BytesType.instance)
   standardIndexedCf.columnMetadata(colMetaData)
@@ -30,6 +30,4 @@ trait CascalSchema extends Schema {
       cfMetaData("Super", ColumnFamilyType.Super, TimeUUIDType.instance),
       cfMetaData("SuperBytes", ColumnFamilyType.Super, BytesType.instance),
       standardIndexedCf)
-  
-    
 }
