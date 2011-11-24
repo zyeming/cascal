@@ -6,7 +6,7 @@ import com.shorrockin.cascal.utils.UUID
 /**
  * tests session removal
  */
-class TestRemoval extends CassandraTestPool {
+class TestRemoval extends EmbeddedCassandra {
   import com.shorrockin.cascal.utils.Conversions._
   import Assert._
 

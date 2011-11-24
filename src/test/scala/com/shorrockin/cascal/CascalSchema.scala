@@ -10,9 +10,13 @@ import org.apache.cassandra.config.ColumnDefinition
 import org.apache.cassandra.thrift.IndexType
 import com.shorrockin.cascal.utils.Conversions.byteBuffer
 import org.apache.cassandra.db.marshal.LongType
+import com.shorrockin.cascal.test.Schema
 
-trait Schema {
+trait CascalSchema extends Schema {
   val keyspace = "Test"
+  val replicationFactor = 1
+  val timeout = 1100
+  val strategyClass = classOf[SimpleStrategy]
   
   val colMetaData = Map[ByteBuffer, ColumnDefinition](
     byteBuffer("column1") -> new ColumnDefinition("column1", BytesType.instance, IndexType.KEYS, null),
@@ -21,20 +25,11 @@ trait Schema {
   val standardIndexedCf = cfMetaData("StandardIndexed", ColumnFamilyType.Standard, BytesType.instance)
   standardIndexedCf.columnMetadata(colMetaData)
   
-  val ksMetaData = new KSMetaData(keyspace, classOf[SimpleStrategy], Map("replication_factor" -> "1"), false,
+  val cfMetaDatas = Seq(
       cfMetaData("Standard", ColumnFamilyType.Standard, BytesType.instance),
       cfMetaData("Super", ColumnFamilyType.Super, TimeUUIDType.instance),
       cfMetaData("SuperBytes", ColumnFamilyType.Super, BytesType.instance),
       standardIndexedCf)
   
-  def cfMetaData(name: String, cfType: ColumnFamilyType, colType: AbstractType[_]) = {
-    new CFMetaData(keyspace, name, cfType, colType, null).keyCacheSize(0);
-  }
-  
-  def loadSchema() = {
-    for (cfMetaData <- ksMetaData.cfMetaData().values()) 
-      CFMetaData.map(cfMetaData)
-        
-    DatabaseDescriptor.setTableDefinition(ksMetaData, DatabaseDescriptor.getDefsVersion())
-  }
+    
 }

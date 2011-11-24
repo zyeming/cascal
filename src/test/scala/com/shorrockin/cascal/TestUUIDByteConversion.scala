@@ -9,7 +9,7 @@ import java.util.{UUID => JavaUUID, Date}
 /**
  * tests the UUID ability to convert to and from bytes, strings, etc.
  */
-class TestUUIDByteConversion extends CassandraTestPool {
+class TestUUIDByteConversion extends EmbeddedCassandra {
   import Assert._
   import Conversions._
 

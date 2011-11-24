@@ -6,7 +6,7 @@ import java.util.Date
 import session.{ColumnPredicate, RangePredicate}
 import utils.{Conversions, Logging}
 
-class TestStandardInesrtAndList extends CassandraTestPool with Logging {
+class TestStandardInesrtAndList extends EmbeddedCassandra with Logging {
   import Assert._
   import Conversions._
 

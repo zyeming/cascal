@@ -3,7 +3,7 @@ package com.shorrockin.cascal
 import org.junit.{Assert, Test}
 import utils.Conversions
 
-class TestEmbeddedCassandra extends CassandraTestPool {
+class TestEmbeddedCassandra extends EmbeddedCassandra {
   import Assert._
   import Conversions._
 

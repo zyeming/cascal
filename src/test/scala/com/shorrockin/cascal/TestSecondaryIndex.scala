@@ -4,7 +4,7 @@ import org.junit.{Assert, Test}
 import com.shorrockin.cascal.utils.Conversions._
 import Assert._
 
-class TestSeconderyIndex extends CassandraTestPool {
+class TestSeconderyIndex extends EmbeddedCassandra {
 
   val family = "Test" \ "StandardIndexed"
   val key1 = family \ "key1"

@@ -9,7 +9,7 @@ import utils.{UUID, Conversions}
  * tests our ability to list multiple keys, translates to a cassandra
  * multiget_slice
  */
-class TestMultiKeyList extends CassandraTestPool {
+class TestMultiKeyList extends EmbeddedCassandra {
   import Assert._
   import Conversions._
 

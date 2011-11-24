@@ -5,7 +5,7 @@ import org.junit.{Test, Assert}
 import utils.{UUID, Conversions, Logging}
 import java.nio.ByteBuffer
 
-class TestSuperInsertAndList extends CassandraTestPool with Logging {
+class TestSuperInsertAndList extends EmbeddedCassandra with Logging {
   import Assert._
   import Conversions._
 

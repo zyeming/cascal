@@ -2,8 +2,9 @@ package com.shorrockin.cascal
 
 import org.junit.{Assert, Test}
 import com.shorrockin.cascal.utils.Utils
+import com.shorrockin.cascal.utils.UUID
 
-class InsertGetTest extends CassandraTestPool {
+class InsertGetTest extends EmbeddedCassandra {
   import com.shorrockin.cascal.utils.Conversions._
   import Assert._
 

@@ -7,7 +7,7 @@ import com.shorrockin.cascal.utils.Utils
  * tests a looping insert remove.  Stresses out the precision of
  * system time.
  */
-class TestInsertRemoveLoop extends CassandraTestPool {
+class TestInsertRemoveLoop extends EmbeddedCassandra {
   import com.shorrockin.cascal.utils.Conversions._
   import Assert._
 

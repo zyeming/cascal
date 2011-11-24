@@ -5,7 +5,7 @@ import org.junit.{Assert, Test}
 import session.{Consistency, EmptyPredicate, KeyRange}
 import utils.Conversions
 
-class TestKeyRangeList extends CassandraTestPool {
+class TestKeyRangeList extends EmbeddedCassandra {
   import Assert._
   import Conversions._
 

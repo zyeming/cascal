@@ -5,7 +5,7 @@ import org.junit.{Assert, Test}
 import session.{ColumnPredicate, Delete, Insert}
 import utils.{UUID, Conversions}
 
-class TestBatchOperations extends CassandraTestPool {
+class TestBatchOperations extends EmbeddedCassandra {
   import Conversions._
   import Assert._
 
