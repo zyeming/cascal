@@ -5,16 +5,16 @@ import collection.immutable.HashSet
 import java.util.concurrent.atomic.AtomicLong
 import java.util.{Map => JMap, List => JList, HashMap, ArrayList}
 import java.nio.ByteBuffer
-
 import org.apache.thrift.protocol.TBinaryProtocol
 import org.apache.thrift.transport.{TFramedTransport, TSocket}
 import org.apache.cassandra.thrift.{Mutation, Cassandra, NotFoundException, ConsistencyLevel}
 import org.apache.cassandra.thrift.{Column => CassColumn}
 import org.apache.cassandra.thrift.{SuperColumn => CassSuperColumn}
-
 import com.shorrockin.cascal.model._
 import com.shorrockin.cascal.utils.Conversions._
 import com.shorrockin.cascal.utils.Utils.now
+import scala.collection.mutable.LinkedHashMap
+import scala.collection.Map
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -308,13 +308,13 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
   def list[ColumnType, ListType](family: ColumnFamily[Key[ColumnType, ListType]], range: KeyRange, predicate: Predicate, consistency: Consistency): Map[Key[ColumnType, ListType], ListType] = detect {
     verifyKeyspace(family.keyspace.value)
     val results = client.get_range_slices(family.columnParent, predicate.slicePredicate, range.cassandraRange, consistency)
-    var map = Map[Key[ColumnType, ListType], ListType]()
+    var mapBuilder = LinkedHashMap.canBuildFrom[Key[ColumnType, ListType], ListType]()
 
     convertList(results).foreach { (keyslice) =>
       val key = (family \ keyslice.key)
-      map = map + (key -> key.convertListResult(keyslice.columns))
+      mapBuilder += (key -> key.convertListResult(keyslice.columns))
     }
-    map
+    mapBuilder.result
   }
 
 
@@ -341,13 +341,13 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
     verifyKeyspace(family.keyspace.value)
     val results = client.get_indexed_slices(query.family.columnParent, query.indexClause, predicate.slicePredicate, consistency)
         
-    var map = Map[StandardKey, Seq[Column[StandardKey]]]()
+    var mapBuilder = LinkedHashMap.canBuildFrom[StandardKey, Seq[Column[StandardKey]]]()
 
     convertList(results).foreach { (keyslice) =>
       val key = (family \ keyslice.key)
-      map = map + (key -> key.convertListResult(keyslice.columns))
+      mapBuilder += (key -> key.convertListResult(keyslice.columns))
     }
-    map
+    mapBuilder.result
   }
     
   /**

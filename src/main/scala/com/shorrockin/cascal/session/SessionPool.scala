@@ -5,7 +5,7 @@ import org.apache.commons.pool.impl.{GenericObjectPoolFactory, GenericObjectPool
 import com.shorrockin.cascal.utils.Logging
 import com.shorrockin.cascal.jmx.CascalStatistics
 import com.shorrockin.cascal.model._
-
+import scala.collection.Map
 
 /**
  * a session pool which maintains a collection of open sessions so that

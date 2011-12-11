@@ -1,6 +1,7 @@
 package com.shorrockin.cascal.session
 
 import com.shorrockin.cascal.model._
+import scala.collection.Map
 
 /**
  * session template describes the core function of a session. sub-classes of a template

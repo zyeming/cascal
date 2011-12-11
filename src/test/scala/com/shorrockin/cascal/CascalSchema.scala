@@ -15,7 +15,7 @@ import com.shorrockin.cascal.test.Schema
 trait CascalSchema extends Schema {
   val keyspace = "Test"
   val replicationFactor = 1
-  val timeout = 1100
+  val timeout = 2000
   val strategyClass = classOf[SimpleStrategy]
   
   val colMetaData = Map[ByteBuffer, ColumnDefinition](
