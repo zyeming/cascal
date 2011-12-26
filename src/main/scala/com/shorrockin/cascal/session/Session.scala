@@ -146,7 +146,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
   /**
    *  returns the column value for the specified column
    */
-  def get[ResultType](col: Gettable[ResultType], consistency: Consistency): Option[ResultType] = detect {
+  def get[ResultType, ValueType](col: Gettable[ResultType, ValueType], consistency: Consistency): Option[ResultType] = detect {
     verifyKeyspace(col.keyspace.value)
     try {
       verifyKeyspace(col.keyspace.value)
@@ -161,7 +161,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
   /**
    * returns the column value for the specified column, using the default consistency
    */
-  def get[ResultType](col: Gettable[ResultType]): Option[ResultType] = get(col, defaultConsistency)
+  def get[ResultType, ValueType](col: Gettable[ResultType, ValueType]): Option[ResultType] = get(col, defaultConsistency)
 
 
   /**
@@ -180,6 +180,13 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
    */
   def insert[E](col: Column[E]): Column[E] = insert(col, defaultConsistency)
 
+  def add[E](col: CounterColumn[E], consistency: Consistency) = detect {
+    verifyKeyspace(col.keyspace.value)
+    client.add(col.key.value, col.owner.asInstanceOf[ColumnContainer[_, _]].columnParent, col.cassandraColumn, consistency)
+    col
+  }
+  
+  def add[E](col: CounterColumn[E]): CounterColumn[E] = add(col, defaultConsistency)
 
   /**
    *   counts the number of columns in the specified column container
@@ -197,7 +204,6 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
    * performs count on the specified column container
    */
   def count(container: ColumnContainer[_, _]): Int = count(container, defaultConsistency)
-
 
   /**
    * removes the specified column container
@@ -221,6 +227,20 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
   def remove(column: Column[_], consistency: Consistency): Unit = detect {
     verifyKeyspace(column.keyspace.value)
     client.remove(column.key.value, column.columnPath, now, consistency)
+  }
+
+
+  /**
+   * removes the specified column container using the default consistency
+   */
+  def remove(column: CounterColumn[_]): Unit = remove(column, defaultConsistency)
+  
+  /**
+   * removes the specified column container
+   */
+  def remove(column: CounterColumn[_], consistency: Consistency): Unit = detect {
+    verifyKeyspace(column.keyspace.value)
+    client.remove_counter(column.key.value, column.columnPath, consistency)
   }
 
 

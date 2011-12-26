@@ -11,8 +11,9 @@ import com.shorrockin.cascal.utils.Conversions
  *
  * @author Chris Shorrock
  */
-case class SuperColumn(val value:ByteBuffer, val key:SuperKey) extends Gettable[Seq[Column[SuperColumn]]]()
-                                                                   with StandardColumnContainer[Column[SuperColumn], Seq[Column[SuperColumn]]] {
+case class SuperColumn(val value:ByteBuffer, val key:SuperKey) extends Gettable[Seq[Column[SuperColumn]], ByteBuffer]
+    with StandardColumnContainer[Column[SuperColumn], Seq[Column[SuperColumn]], ByteBuffer] {
+  
   def \(name:ByteBuffer) = new Column(name, this)
   def \(name:ByteBuffer, value:ByteBuffer) = new Column(name, value, this)
   def \(name:ByteBuffer, value:ByteBuffer, time:Long) = new Column(name, value, time, this)

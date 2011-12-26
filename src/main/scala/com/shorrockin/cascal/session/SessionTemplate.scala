@@ -34,13 +34,13 @@ trait SessionTemplate {
   /**
    *  returns the column value for the specified column
    */
-  def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType]
+  def get[ResultType, ValueType](col:Gettable[ResultType, ValueType], consistency:Consistency):Option[ResultType]
 
 
   /**
    * returns the column value for the specified column, using the default consistency
    */
-  def get[ResultType](col:Gettable[ResultType]):Option[ResultType]
+  def get[ResultType, ValueType](col:Gettable[ResultType, ValueType]):Option[ResultType]
 
 
   /**
@@ -54,7 +54,11 @@ trait SessionTemplate {
    */
   def insert[E](col:Column[E]):Column[E]
 
-
+  
+  def add[E](col: CounterColumn[E], consistency: Consistency): CounterColumn[E]
+  
+  def add[E](col: CounterColumn[E]): CounterColumn[E]
+  
   /**
    *   counts the number of columns in the specified column container
    */
@@ -91,6 +95,17 @@ trait SessionTemplate {
   def remove(column:Column[_]):Unit
 
 
+  /**
+   * removes the specified column counter container using the default consistency
+   */
+  def remove(column: CounterColumn[_]): Unit
+  
+  /**
+   * removes the specified column counter container
+   */
+  def remove(column: CounterColumn[_], consistency: Consistency): Unit
+
+  
   /**
    * performs a list of the provided standard key. uses the list of columns as the predicate
    * to determine which columns to return.

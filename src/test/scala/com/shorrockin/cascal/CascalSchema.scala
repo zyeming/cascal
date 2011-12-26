@@ -2,7 +2,7 @@ package com.shorrockin.cascal
 
 import scala.collection.JavaConversions._
 import org.apache.cassandra.config.{CFMetaData, DatabaseDescriptor, KSMetaData}
-import org.apache.cassandra.db.marshal.{AbstractType, BytesType, TimeUUIDType}
+import org.apache.cassandra.db.marshal.{AbstractType, BytesType, CounterColumnType, TimeUUIDType}
 import org.apache.cassandra.db.ColumnFamilyType
 import org.apache.cassandra.locator.SimpleStrategy
 import java.nio.ByteBuffer
@@ -29,5 +29,6 @@ trait CascalSchema extends Schema {
       cfMetaData("Standard", ColumnFamilyType.Standard, BytesType.instance),
       cfMetaData("Super", ColumnFamilyType.Super, TimeUUIDType.instance),
       cfMetaData("SuperBytes", ColumnFamilyType.Super, BytesType.instance),
+      cfMetaData("StandardCounter", ColumnFamilyType.Standard, BytesType.instance).replicateOnWrite(true).defaultValidator(CounterColumnType.instance),
       standardIndexedCf)
 }

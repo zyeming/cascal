@@ -7,8 +7,7 @@ import java.nio.ByteBuffer
  *
  * @author Chris Shorrock
  */
-trait StandardColumnContainer[ColumnType, SliceType] extends ColumnContainer[ColumnType, SliceType] {
+trait StandardColumnContainer[ColumnType, SliceType, ValueType] extends ColumnContainer[ColumnType, SliceType] {
   def \(name:ByteBuffer):ColumnType
-  def \(name:ByteBuffer, value:ByteBuffer):ColumnType
-  def \(name:ByteBuffer, value:ByteBuffer, time:Long):ColumnType
+  def \(name:ByteBuffer, value:ValueType):ColumnType
 }

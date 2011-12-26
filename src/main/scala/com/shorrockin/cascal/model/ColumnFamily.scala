@@ -15,5 +15,4 @@ trait ColumnFamily[+KeyType] extends StringValue {
   lazy val columnParent = new ColumnParent().setColumn_family(value)
   
   def \(value:String):KeyType
-
 }

@@ -10,7 +10,7 @@ import org.apache.cassandra.thrift.{ColumnPath, ColumnOrSuperColumn}
  * @param Result determines the type of object returned when this
  * column is looked up through the session get method.
  */
-trait Gettable[Result] extends ByteValue {
+trait Gettable[Result, ValueType] extends PathComponent[ValueType] {
   val key:Key[_, _]
   val keyspace:Keyspace
   val family:ColumnFamily[_]

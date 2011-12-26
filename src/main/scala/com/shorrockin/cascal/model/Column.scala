@@ -20,7 +20,7 @@ case class Column[Owner](val name:ByteBuffer,
                          val value:ByteBuffer,
                          val time:Long,
                          val ttl:Option[Int],
-                         val owner:Owner) extends Gettable[Column[Owner]] {
+                         val owner:Owner) extends Gettable[Column[Owner], ByteBuffer] {
 
   def this(name:ByteBuffer, value:ByteBuffer, owner:Owner) = this(name, value, now, None, owner)
   def this(name:ByteBuffer, owner:Owner) = this(name, null, now, None, owner)

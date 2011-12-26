@@ -165,14 +165,18 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
   def truncate(cfname: String) = borrow { _.truncate(cfname) }
   
-  def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType] = borrow { _.get(col, consistency) }
+  def get[ResultType, ValueType](col:Gettable[ResultType, ValueType], consistency:Consistency):Option[ResultType] = borrow { _.get(col, consistency) }
 
-  def get[ResultType](col:Gettable[ResultType]):Option[ResultType] = borrow { _.get(col) }
+  def get[ResultType, ValueType](col:Gettable[ResultType, ValueType]):Option[ResultType] = borrow { _.get(col) }
 
   def insert[E](col:Column[E], consistency:Consistency):Column[E] = borrow { _.insert(col, consistency) }
 
   def insert[E](col:Column[E]):Column[E] = borrow { _.insert(col) }
 
+  def add[E](col: CounterColumn[E], consistency: Consistency) = borrow { _.add(col, consistency) }
+  
+  def add[E](col: CounterColumn[E]): CounterColumn[E] = borrow { _.add(col) }
+  
   def count(container:ColumnContainer[_ ,_], consistency:Consistency):Int = borrow { _.count(container, consistency) }
 
   def count(container:ColumnContainer[_, _]):Int = borrow { _.count(container) }
@@ -185,6 +189,17 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
   def remove(column:Column[_]):Unit = borrow { _.remove(column) }
 
+  /**
+   * removes the specified column container using the default consistency
+   */
+  def remove(column: CounterColumn[_]): Unit = borrow { _.remove(column) }
+  
+  /**
+   * removes the specified column container
+   */
+  def remove(column: CounterColumn[_], consistency: Consistency): Unit = borrow { _.remove(column, consistency) }
+
+  
   def list[ResultType](container:ColumnContainer[_, ResultType], predicate:Predicate, consistency:Consistency):ResultType = borrow { _.list(container, predicate, consistency) }
 
   def list[ResultType](container:ColumnContainer[_, ResultType]):ResultType = borrow { _.list(container) }
