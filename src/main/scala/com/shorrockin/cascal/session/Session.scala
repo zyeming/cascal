@@ -205,6 +205,30 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
    */
   def count(container: ColumnContainer[_, _]): Int = count(container, defaultConsistency)
 
+  def count[ColumnType, ResultType](containers: Seq[ColumnContainer[ColumnType, ResultType]],
+      predicate:Predicate = EmptyPredicate,
+      consistency: Consistency = defaultConsistency): Map[ColumnContainer[ColumnType, ResultType], Int] = detect {
+    
+    if (containers.size > 0) detect {
+      val firstContainer = containers(0)
+      val keyspace = firstContainer.keyspace
+      verifyKeyspace(keyspace.value)
+
+      val keyStrings = containers.map {container => ByteBuffer.wrap(container.key.value.getBytes("UTF-8"))}
+      val result = client.multiget_count(keyStrings, firstContainer.columnParent, predicate.slicePredicate, consistency)
+      
+      val containersByKey = containers.map {container =>
+         (container.key.value, container)
+      }.toMap
+      
+      result map {element =>
+        (containersByKey(element._1), element._2.toInt)
+      }
+    } else {
+      throw new IllegalArgumentException("must provide at least 1 container for a count(keys, predicate, consistency) call")
+    }
+  }
+  
   /**
    * removes the specified column container
    */

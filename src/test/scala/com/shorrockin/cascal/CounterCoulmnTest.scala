@@ -86,13 +86,17 @@ class CounterCoulmnTest extends EmbeddedCassandra {
     assertEquals(1, session.list(key).size)
   }
   
-//  @Test def countCounterColumns = borrow { session =>
-//    val key = "Test" `#` "StandardCounter" \ "key"
-//    session.add(key \ "col1" + 1)
-//    session.add(key \ "col1" - 100)
-//    session.add(key \ "col1" + 23)
-//    
-//    val results = session.count(key)
-//    assertEquals(3, results)
-//  }
+  @Test def countCounterColumns = borrow { session =>
+    val key1 = "Test" `#` "StandardCounter" \ "count columns key1"
+    session.add(key1 \ "col1" + 1)
+    session.add(key1 \ "col2" - 100)
+    session.add(key1 \ "col3" + 23)
+    
+    val key2 = "Test" `#` "StandardCounter" \ "count columns key2"
+    session.add(key2 \ "col1" + 1)
+    
+    val results = session.count(key1 :: key2 :: Nil)
+    assertEquals(3, results(key1))
+    assertEquals(1, results(key2))
+  }
 } 	

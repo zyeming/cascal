@@ -12,6 +12,8 @@ import scala.collection.Map
  */
 trait SessionTemplate {
 
+  val defaultConsistency:Consistency
+  
   /**
    * return the current cluster name of the cassandra instance
    */
@@ -55,9 +57,7 @@ trait SessionTemplate {
   def insert[E](col:Column[E]):Column[E]
 
   
-  def add[E](col: CounterColumn[E], consistency: Consistency): CounterColumn[E]
-  
-  def add[E](col: CounterColumn[E]): CounterColumn[E]
+  def add[E](col: CounterColumn[E], consistency: Consistency = defaultConsistency): CounterColumn[E]
   
   /**
    *   counts the number of columns in the specified column container
@@ -70,7 +70,9 @@ trait SessionTemplate {
    */
   def count(container:ColumnContainer[_, _]):Int
 
-
+  def count[ColumnType, ResultType](containers: Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate = EmptyPredicate, consistency: Consistency = defaultConsistency): Map[ColumnContainer[ColumnType, ResultType], Int]
+  
+  
   /**
    * removes the specified column container
    */
@@ -94,16 +96,10 @@ trait SessionTemplate {
    */
   def remove(column:Column[_]):Unit
 
-
-  /**
-   * removes the specified column counter container using the default consistency
-   */
-  def remove(column: CounterColumn[_]): Unit
-  
   /**
    * removes the specified column counter container
    */
-  def remove(column: CounterColumn[_], consistency: Consistency): Unit
+  def remove(column: CounterColumn[_], consistency: Consistency = defaultConsistency): Unit
 
   
   /**

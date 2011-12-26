@@ -19,7 +19,7 @@ import scala.collection.Map
  *
  * @author Chris Shorrock
  */
-class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consistency, framedTransport:Boolean) extends SessionTemplate {
+class SessionPool(val hosts:Seq[Host], val params:PoolParams, val defaultConsistency:Consistency, framedTransport:Boolean) extends SessionTemplate {
   def this(hosts:Seq[Host], params:PoolParams, consistency:Consistency) = this(hosts, params, consistency, false)
   def this(hosts:Seq[Host], params:PoolParams) = this(hosts, params, Consistency.One, false)
 
@@ -130,7 +130,7 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
         try {
           log.debug("attempting to create connection to: " + host)
-          val session = new Session(host.address, host.port, host.timeout, consistency, framedTransport)
+          val session = new Session(host.address, host.port, host.timeout, defaultConsistency, framedTransport)
           session.open
           CascalStatistics.creation(host)
           session
@@ -173,14 +173,14 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
   def insert[E](col:Column[E]):Column[E] = borrow { _.insert(col) }
 
-  def add[E](col: CounterColumn[E], consistency: Consistency) = borrow { _.add(col, consistency) }
-  
-  def add[E](col: CounterColumn[E]): CounterColumn[E] = borrow { _.add(col) }
+  def add[E](col: CounterColumn[E], consistency: Consistency = defaultConsistency) = borrow { _.add(col, consistency) }
   
   def count(container:ColumnContainer[_ ,_], consistency:Consistency):Int = borrow { _.count(container, consistency) }
 
   def count(container:ColumnContainer[_, _]):Int = borrow { _.count(container) }
 
+  def count[ColumnType, ResultType](containers: Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate = EmptyPredicate, consistency: Consistency = defaultConsistency): Map[ColumnContainer[ColumnType, ResultType], Int] = borrow { _.count(containers, predicate, consistency) }
+  
   def remove(container:ColumnContainer[_, _], consistency:Consistency):Unit = borrow { _.remove(container, consistency) }
 
   def remove(container:ColumnContainer[_, _]):Unit = borrow { _.remove(container) }
@@ -190,14 +190,9 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
   def remove(column:Column[_]):Unit = borrow { _.remove(column) }
 
   /**
-   * removes the specified column container using the default consistency
-   */
-  def remove(column: CounterColumn[_]): Unit = borrow { _.remove(column) }
-  
-  /**
    * removes the specified column container
    */
-  def remove(column: CounterColumn[_], consistency: Consistency): Unit = borrow { _.remove(column, consistency) }
+  def remove(column: CounterColumn[_], consistency: Consistency = defaultConsistency): Unit = borrow { _.remove(column, consistency) }
 
   
   def list[ResultType](container:ColumnContainer[_, ResultType], predicate:Predicate, consistency:Consistency):ResultType = borrow { _.list(container, predicate, consistency) }
