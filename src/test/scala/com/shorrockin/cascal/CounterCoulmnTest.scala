@@ -15,7 +15,7 @@ class CounterCoulmnTest extends EmbeddedCassandra {
 
   @Test def addAndGetCounter = borrow { session =>
 
-    val col = "Test" `#` "StandardCounter" \ "Test" \ "col name"
+    val col = "Test" \# "StandardCounter" \ "Test" \ "col name"
     assertTrue(session.get(col).isEmpty)
     
     session.add(col + 1)
@@ -29,7 +29,7 @@ class CounterCoulmnTest extends EmbeddedCassandra {
   }
 
   @Test def getCounterRowsUsingKeyRange = borrow { session =>
-    val cf = "Test" `#` "StandardCounter"
+    val cf = "Test" \# "StandardCounter"
     session.add(cf \ "range1" \ "col1" + 1)
     session.add(cf \ "range2" \ "col1" - 100)
     session.add(cf \ "range3" \ "col1" + 23)
@@ -39,9 +39,9 @@ class CounterCoulmnTest extends EmbeddedCassandra {
   }
   
   @Test def getCounterRowsUsingMultiGet = borrow { session =>
-    val key1 = "Test" `#` "StandardCounter" \ "container1"
-    val key2 = "Test" `#` "StandardCounter" \ "container2"
-    val key3 = "Test" `#` "StandardCounter" \ "container3"
+    val key1 = "Test" \# "StandardCounter" \ "container1"
+    val key2 = "Test" \# "StandardCounter" \ "container2"
+    val key3 = "Test" \# "StandardCounter" \ "container3"
     
     session.add(key1 \ "col1" + 1)
     session.add(key2 \ "col1" - 100)
@@ -52,7 +52,7 @@ class CounterCoulmnTest extends EmbeddedCassandra {
   }
   
   @Test def getKeyCounters = borrow { session =>
-    val key = "Test" `#` "StandardCounter" \ "key counters"
+    val key = "Test" \# "StandardCounter" \ "key counters"
     session.add(key \ "col1" + 1)
     session.add(key \ "col2" - 2)
     session.add(key \ "col3" + 3)
@@ -65,7 +65,7 @@ class CounterCoulmnTest extends EmbeddedCassandra {
   }
   
   @Test def removeCounterColumn = borrow { session =>
-    val col = "Test" `#` "StandardCounter" \ "testremove" \ "col1" + 1
+    val col = "Test" \# "StandardCounter" \ "testremove" \ "col1" + 1
     session.add(col)
     assertEquals(Some(1), session.get(col).get.value)
     
@@ -74,7 +74,7 @@ class CounterCoulmnTest extends EmbeddedCassandra {
   }
 
   @Test def counterBatchAddAndDelete = borrow { session =>
-    val key  = "Test" `#` "StandardCounter" \ "test batch"
+    val key  = "Test" \# "StandardCounter" \ "test batch"
     val col1 = key \ ("Column-1", + 10)
     val col2 = key \ ("Column-2", + 2)
     val col3 = key \ ("Column-3",  - 500)
@@ -87,12 +87,12 @@ class CounterCoulmnTest extends EmbeddedCassandra {
   }
   
   @Test def countCounterColumns = borrow { session =>
-    val key1 = "Test" `#` "StandardCounter" \ "count columns key1"
+    val key1 = "Test" \# "StandardCounter" \ "count columns key1"
     session.add(key1 \ "col1" + 1)
     session.add(key1 \ "col2" - 100)
     session.add(key1 \ "col3" + 23)
     
-    val key2 = "Test" `#` "StandardCounter" \ "count columns key2"
+    val key2 = "Test" \# "StandardCounter" \ "count columns key2"
     session.add(key2 \ "col1" + 1)
     
     val results = session.count(key1 :: key2 :: Nil)
