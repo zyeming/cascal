@@ -1,6 +1,6 @@
 h3. Project Status
 
-Cascal fork with support for TTL and Secondary indexes
+Cascal fork with support for TTL, Secondary indexes & Counters Columns
 master: Cassandra 1.0.3
 branch 0.8: Cassandra 0.8.x
 
@@ -9,10 +9,11 @@ h3. Description:
 Cascal is a simple "Cassandra":http://cassandra.apache.org/ library built on the "Scala":www.scala-lang.org language that provides a very consistent and simple means by which you can interact with the Cassandra DB, providing simple means to:
 
 * Insert / List / Get / Delete
-* Batch Insert / Delete
+* Batch Insert / Delete / Add
 * Map Seq[Columns] Into Domain Objects
 * Set Column TTL
 * Secondary indexes
+* Counters Columns
 * Utilize a Session Pool
 
 One of the goals of Cassandra is to make the Thrift library operate in a way more conducive with the Scala language. As such when using Cascal you only need to used the Cascal libraries.
