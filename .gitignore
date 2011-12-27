@@ -10,3 +10,5 @@ project/boot/
 /.project
 /.classpath
 /.settings
+/.cache
+/.history
