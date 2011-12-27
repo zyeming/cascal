@@ -8,7 +8,6 @@ import com.shorrockin.cascal.session.ColumnPredicate
 import com.shorrockin.cascal.session.Add
 import com.shorrockin.cascal.session.Delete
 
-
 class CounterCoulmnTest extends EmbeddedCassandra {
   import com.shorrockin.cascal.utils.Conversions._
   import Assert._

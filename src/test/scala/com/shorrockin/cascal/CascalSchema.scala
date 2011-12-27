@@ -30,5 +30,6 @@ trait CascalSchema extends Schema {
       cfMetaData("Super", ColumnFamilyType.Super, TimeUUIDType.instance),
       cfMetaData("SuperBytes", ColumnFamilyType.Super, BytesType.instance),
       cfMetaData("StandardCounter", ColumnFamilyType.Standard, BytesType.instance).replicateOnWrite(true).defaultValidator(CounterColumnType.instance),
+      cfMetaData("SuperCounter", ColumnFamilyType.Super, BytesType.instance).replicateOnWrite(true).defaultValidator(CounterColumnType.instance),
       standardIndexedCf)
 }
