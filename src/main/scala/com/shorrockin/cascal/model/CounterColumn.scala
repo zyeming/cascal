@@ -21,7 +21,7 @@ case class CounterColumn[Owner](val name:ByteBuffer,
     val out = new ColumnPath(family.value)
     owner match {
       case owner:CounterSuperColumn => out.setColumn(name).setSuper_column(owner.value)
-      case key:StandardCounterKey => out.setColumn(name)
+      case key:CounterStandardKey => out.setColumn(name)
     }
   }
   
@@ -39,7 +39,7 @@ case class CounterColumn[Owner](val name:ByteBuffer,
   lazy val columnOrSuperColumn = {
     val cosc = new ColumnOrSuperColumn
     owner match {
-      case key:StandardCounterKey => cosc.setCounter_column(cassandraColumn())
+      case key:CounterStandardKey => cosc.setCounter_column(cassandraColumn())
       case sup:CounterSuperColumn =>
         cosc.setCounter_super_column(new CassandraCounterSuperColumn(sup.value, cassandraColumn() :: Nil))
     }

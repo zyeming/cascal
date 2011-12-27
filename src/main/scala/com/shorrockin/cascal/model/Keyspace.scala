@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
  */
 case class Keyspace(val value:String) extends StringValue {
   def \(value:String):StandardColumnFamily = new StandardColumnFamily(value, this)
-  def \#(value:String):StandardCounterColumnFamily = new StandardCounterColumnFamily(value, this)
+  def \#(value:String):CounterStandardColumnFamily = new CounterStandardColumnFamily(value, this)
   def \\(value:String):SuperColumnFamily = new SuperColumnFamily(value, this)
   def \\#(value:String):CounterSuperColumnFamily = new CounterSuperColumnFamily(value, this)
   

@@ -2,14 +2,14 @@ package com.shorrockin.cascal.model
 import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.ColumnOrSuperColumn
 
-case class StandardCounterKey(val value:String, val family:StandardCounterColumnFamily)
-	extends Key[CounterColumn[StandardCounterKey], Seq[CounterColumn[StandardCounterKey]]]
-	with StandardColumnContainer[CounterColumn[StandardCounterKey], Seq[CounterColumn[StandardCounterKey]], Long] {
+case class CounterStandardKey(val value:String, val family:CounterStandardColumnFamily)
+	extends Key[CounterColumn[CounterStandardKey], Seq[CounterColumn[CounterStandardKey]]]
+	with StandardColumnContainer[CounterColumn[CounterStandardKey], Seq[CounterColumn[CounterStandardKey]], Long] {
 
   def \(name:ByteBuffer) = new CounterColumn(name, None, this)
   def \(name:ByteBuffer, value:Long) = new CounterColumn(name, Some(value), this)
 
-  def convertListResult(results:Seq[ColumnOrSuperColumn]):Seq[CounterColumn[StandardCounterKey]] = {
+  def convertListResult(results:Seq[ColumnOrSuperColumn]):Seq[CounterColumn[CounterStandardKey]] = {
     results.map { (result) =>
       val column = result.getCounter_column
       \(ByteBuffer.wrap(column.getName), column.getValue)
