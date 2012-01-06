@@ -1,6 +1,6 @@
 package com.shorrockin.cascal.serialization
 
-import com.shorrockin.cascal.utils.{UUID => UUIDUtils}
+import com.shorrockin.cascal.utils.{UUID => UUIDUtils, ThreadLocal}
 import java.util.UUID
 import java.util.Date
 import java.nio.charset.Charset
@@ -48,16 +48,14 @@ trait Serializer[A] {
 
 object StringSerializer extends Serializer[String] {
   val utf8 = Charset.forName("UTF-8")
-  private val _decoder = new DynamicVariable[CharsetDecoder](null)
-  def decoder = _decoder value
-  private val _encoder = new DynamicVariable[CharsetEncoder](null)
-  def encoder = _encoder value
+  private val decoder = new ThreadLocal(utf8.newDecoder)
+  private val encoder = new ThreadLocal(utf8.newEncoder)
 
-  def toByteBuffer(str:String) = _encoder.withValue(utf8.newEncoder) {
-    encoder.encode(CharBuffer.wrap(str.toCharArray))
+  def toByteBuffer(str:String) = encoder.withValue {
+    _.encode(CharBuffer.wrap(str.toCharArray))
   }
-  def fromByteBuffer(bytes:ByteBuffer) = _decoder.withValue(utf8.newDecoder) {
-    decoder.decode(bytes).toString
+  def fromByteBuffer(bytes:ByteBuffer) = decoder.withValue {
+    _.decode(bytes).toString
   }
   def toString(str:String) = str
   def fromString(str:String) = str
