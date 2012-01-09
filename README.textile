@@ -1,10 +1,8 @@
-h3. Project Status
+h1. Simple Scala based Cassandra client
 
-Cascal fork with support for TTL, Secondary indexes & Counters Columns
-master: Cassandra 1.0.3
-branch 0.8: Cassandra 0.8.x
+Cascal fork with support for TTL, Secondary indexes, Composite Columns & Counters Columns
 
-h3. Description:
+h2. Description:
 
 Cascal is a simple "Cassandra":http://cassandra.apache.org/ library built on the "Scala":www.scala-lang.org language that provides a very consistent and simple means by which you can interact with the Cassandra DB, providing simple means to:
 
@@ -12,8 +10,9 @@ Cascal is a simple "Cassandra":http://cassandra.apache.org/ library built on the
 * Batch Insert / Delete / Add
 * Map Seq[Columns] Into Domain Objects
 * Set Column TTL
-* Secondary indexes
+* Secondary Indexes
 * Counters Columns
+* Experimental Static Composite Columns
 * Utilize a Session Pool
 
 One of the goals of Cassandra is to make the Thrift library operate in a way more conducive with the Scala language. As such when using Cascal you only need to used the Cascal libraries.
@@ -22,3 +21,14 @@ Please see the "wiki pages":http://wiki.github.com/shorrockin/cascal/ for detail
 * Column TTL: "TestStandardInesrtAndList":https://github.com/Shimi/cascal/blob/master/src/test/scala/com/shorrockin/cascal/TestStandardInesrtAndList.scala last test
 * Secondary index: "TestSecondaryIndex":https://github.com/Shimi/cascal/blob/master/src/test/scala/com/shorrockin/cascal/TestSecondaryIndex.scala
 * Counters columns: "CounterCoulmnTest":https://github.com/Shimi/cascal/blob/master/src/test/scala/com/shorrockin/cascal/CounterCoulmnTest.scala
+* Static Composite Columns: "CompositeTest":https://github.com/Shimi/cascal/blob/master/src/test/scala/com/shorrockin/cascal/CompositeTest.scala
+
+h2. How to build
+
+Download and install "sbt":https://github.com/harrah/xsbt, then run:
+<pre>$ sbt package</pre>
+
+h2. Project Status
+
+master: Cassandra 1.0.x
+branch 0.8: Cassandra 0.8.x
