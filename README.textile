@@ -30,5 +30,6 @@ Download and install "sbt":https://github.com/harrah/xsbt, then run:
 
 h2. Project Status
 
-master: Cassandra 1.0.x
+master: Cassandra 1.1.x
+branch 1.0.0: Cassandra 1.0.x
 branch 0.8: Cassandra 0.8.x

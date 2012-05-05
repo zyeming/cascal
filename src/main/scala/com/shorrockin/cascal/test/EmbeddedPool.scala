@@ -10,10 +10,8 @@ import org.apache.thrift.transport.{TTransportException, TSocket}
 import com.shorrockin.cascal.session._
 import com.shorrockin.cascal.utils.{Utils, Logging}
 import org.apache.cassandra.config.{CFMetaData, KSMetaData}
-import org.junit.AfterClass
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import org.apache.cassandra.config.Schema
 
 /**
  * trait which mixes in the functionality necessary to embed
@@ -100,7 +98,8 @@ object EmbeddedCassandraServer extends Logging {
   private def loadSchema(ksMetaData: KSMetaData) = {
     val ksList = new java.util.ArrayList[KSMetaData]()
     ksList.add(ksMetaData)
-    Schema.instance.load(ksList, Schema.instance.getVersion)
+    import org.apache.cassandra.config.Schema
+    Schema.instance.load(ksList)
   }
   
   def shutdown {

@@ -114,14 +114,14 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, val defaultConsist
   /**
    * used to create sessions
    */
-  private object SessionFactory extends PoolableObjectFactory with Logging {
+  private object SessionFactory extends PoolableObjectFactory[Session] with Logging {
     // instead of randomly choosing a host we'll attempt to round-robin them, may not
     // be completely round robin with multiple threads but it should provide a more
     // even spread than something random.
     var lastHostUsed = 0
 
     def next(current:Int) = (current + 1) % hosts.size
-    def makeObject:Object = makeSession(next(lastHostUsed), 0)
+    def makeObject:Session = makeSession(next(lastHostUsed), 0)
 
     def makeSession(hostIndex:Int, count:Int):Session = {
       if (count < hosts.size) {
@@ -145,15 +145,13 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, val defaultConsist
       }
     }
 
-    def session(obj:Object) = obj.asInstanceOf[Session]
+    def activateObject(session:Session):Unit = {}
 
-    def activateObject(obj:Object):Unit = {}
+    def destroyObject(session:Session):Unit = session.close
 
-    def destroyObject(obj:Object):Unit = session(obj).close
+    def validateObject(session:Session):Boolean = session.isOpen && !session.hasError
 
-    def validateObject(obj:Object):Boolean = session(obj).isOpen && !session(obj).hasError
-
-    def passivateObject(obj:Object):Unit = {}
+    def passivateObject(session:Session):Unit = {}
   }
 
 

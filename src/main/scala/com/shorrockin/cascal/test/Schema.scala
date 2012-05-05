@@ -21,6 +21,6 @@ trait Schema {
   lazy val ksMetaData = KSMetaData.testMetadataNotDurable(keyspace, strategyClass, Map("replication_factor" -> "1"), cfMetaDatas:_*)
   
   def cfMetaData(name: String, cfType: ColumnFamilyType, colType: AbstractType[_]) = {
-    new CFMetaData(keyspace, name, cfType, colType, null).keyCacheSize(0);
+    new CFMetaData(keyspace, name, cfType, colType, null);
   }
 }
