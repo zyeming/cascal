@@ -4,7 +4,7 @@ version := "1.3-SNAPSHOT"
 
 organization := "com.shorrockin"
 
-scalaVersion := "2.9.2"
+scalaVersion := "2.9.1"
 
 compileOrder := CompileOrder.JavaThenScala
 
