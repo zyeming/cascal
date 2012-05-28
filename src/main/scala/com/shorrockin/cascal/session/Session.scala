@@ -314,7 +314,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
       val results = client.multiget_slice(keyStrings, firstContainer.columnParent, predicate.slicePredicate, consistency)
 
       val containersByKey = containers.foldLeft(
-        mutable.Map[String, ColumnContainer[ColumnType, ResultType]]())((acc, container) => {
+        mutable.Map[ByteBuffer, ColumnContainer[ColumnType, ResultType]]())((acc, container) => {
           acc += (container.key.value -> container)
         })
 

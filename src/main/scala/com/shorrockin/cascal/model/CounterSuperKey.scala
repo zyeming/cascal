@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.ColumnOrSuperColumn
 import scala.collection.JavaConversions._
 
-class CounterSuperKey(val value:String, val family:CounterSuperColumnFamily)
+class CounterSuperKey(val value:ByteBuffer, val family:CounterSuperColumnFamily)
 	extends Key[CounterSuperColumn, Seq[(CounterSuperColumn, Seq[CounterColumn[CounterSuperColumn]])]] {
 
   def \(value:ByteBuffer) = new CounterSuperColumn(value, this)

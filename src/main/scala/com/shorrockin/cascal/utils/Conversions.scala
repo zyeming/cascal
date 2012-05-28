@@ -41,8 +41,8 @@ object Conversions {
   implicit def byteBuffer(str:String):ByteBuffer = StringSerializer.toByteBuffer(str)
   implicit def string(bytes:ByteBuffer):String = StringSerializer.fromByteBuffer(bytes)
 
-  implicit def string(source:JavaUUID) = UUIDSerializer.toString(source)
-  implicit def uuid(source:String) = UUIDSerializer.fromString(source)
+  //implicit def string(source:JavaUUID) = UUIDSerializer.toString(source)
+  //implicit def uuid(source:String) = UUIDSerializer.fromString(source)
   implicit def byteBuffer(source:JavaUUID):ByteBuffer = UUIDSerializer.toByteBuffer(source)
 
   implicit def string(col:Column[_]):String = {

@@ -53,7 +53,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
 
       annotation match {
         // if there's a columnsToKey annotation get the first columnsToKey in the columns and return it
-        case k:AKey => stringToObject(cls, columnsToKey(columns).value)
+        case k:AKey => bytesToObject(cls, columnsToKey(columns).value)
 
         // if there's a super column annotation get the super column then use the serializers
         // to convert the byte array to the appropriate value.

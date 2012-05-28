@@ -1,5 +1,6 @@
 package com.shorrockin.cascal.model
 import java.nio.ByteBuffer
+import com.shorrockin.cascal.serialization._
 
 /**
  * abstraction for the standard column family. a standard column family
@@ -8,8 +9,9 @@ import java.nio.ByteBuffer
  * @author Chris Shorrock
  */
 case class StandardColumnFamily(val value:String, val keyspace:Keyspace) extends ColumnFamily[StandardKey] {
-  def \(value:String) = new StandardKey(value, this)
-  
+  def \(value:String) = new StandardKey(StringSerializer.toByteBuffer(value), this)
+  def \(value:ByteBuffer) = new StandardKey(value, this)
+
   override def toString = "%s \\ StandardColumnFamily(value = %s)".format(keyspace.toString, value)
   
   import com.shorrockin.cascal.model.IndexQuery._

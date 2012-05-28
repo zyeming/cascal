@@ -2,7 +2,7 @@ package com.shorrockin.cascal.model
 import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.ColumnOrSuperColumn
 
-case class CounterStandardKey(val value:String, val family:CounterStandardColumnFamily)
+case class CounterStandardKey(val value:ByteBuffer, val family:CounterStandardColumnFamily)
 	extends Key[CounterColumn[CounterStandardKey], Seq[CounterColumn[CounterStandardKey]]]
 	with StandardColumnContainer[CounterColumn[CounterStandardKey], Seq[CounterColumn[CounterStandardKey]], Long] {
 

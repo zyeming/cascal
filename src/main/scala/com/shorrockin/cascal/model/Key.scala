@@ -1,5 +1,5 @@
 package com.shorrockin.cascal.model
-
+import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.{ColumnParent, ColumnPath}
 
 /**
@@ -11,8 +11,8 @@ import org.apache.cassandra.thrift.{ColumnParent, ColumnPath}
  * @param ColumnType the type of column that this key holds
  * @param ListType when this key is used in a list the type of object that is returned
  */
-trait Key[ColumnType, ListType] extends StringValue with ColumnContainer[ColumnType, ListType] {
-  val value:String
+trait Key[ColumnType, ListType] extends ByteValue with ColumnContainer[ColumnType, ListType] {
+  val value:ByteBuffer
 
   val keyspace = family.keyspace
   val key = this

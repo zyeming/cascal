@@ -10,7 +10,7 @@ import org.apache.cassandra.thrift.{ColumnOrSuperColumn}
  *
  * @author Chris Shorrock
  */
-case class StandardKey(val value:String, val family:StandardColumnFamily) extends Key[Column[StandardKey], Seq[Column[StandardKey]]]
+case class StandardKey(val value:ByteBuffer, val family:StandardColumnFamily) extends Key[Column[StandardKey], Seq[Column[StandardKey]]]
                                                                              with StandardColumnContainer[Column[StandardKey], Seq[Column[StandardKey]], ByteBuffer] {
 
   def \(name:ByteBuffer) = new Column(name, this)

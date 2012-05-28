@@ -3,7 +3,7 @@ package com.shorrockin.cascal.model
 import org.apache.cassandra.thrift.{ColumnOrSuperColumn}
 import java.nio.ByteBuffer
 
-case class SuperKey(val value:String, val family:SuperColumnFamily) extends Key[SuperColumn, Seq[(SuperColumn, Seq[Column[SuperColumn]])]] {
+case class SuperKey(val value:ByteBuffer, val family:SuperColumnFamily) extends Key[SuperColumn, Seq[(SuperColumn, Seq[Column[SuperColumn]])]] {
 
   def \(value:ByteBuffer) = new SuperColumn(value, this)
 
