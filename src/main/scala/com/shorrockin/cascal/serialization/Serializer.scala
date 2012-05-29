@@ -97,9 +97,16 @@ object LongSerializer extends Serializer[Long] {
   def fromString(str:String) = str.toLong
 }
 
+// object BooleanSerializer extends Serializer[Boolean] {
+//   def toByteBuffer(b:Boolean) = StringSerializer.toByteBuffer(b.toString)
+//   def fromByteBuffer(bytes:ByteBuffer) = StringSerializer.fromByteBuffer(bytes).toBoolean
+//   def toString(obj:Boolean) = obj.toString
+//   def fromString(str:String) = str.toBoolean
+// }
+
 object BooleanSerializer extends Serializer[Boolean] {
-  def toByteBuffer(b:Boolean) = StringSerializer.toByteBuffer(b.toString)
-  def fromByteBuffer(bytes:ByteBuffer) = StringSerializer.fromByteBuffer(bytes).toBoolean
+  def toByteBuffer(b:Boolean) = ByteBuffer.allocate(1).put(0, if(b) 1.asInstanceOf[Byte] else 0.asInstanceOf[Byte])
+  def fromByteBuffer(bytes:ByteBuffer) = bytes.get == 1.asInstanceOf[Byte]
   def toString(obj:Boolean) = obj.toString
   def fromString(str:String) = str.toBoolean
 }

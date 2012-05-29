@@ -150,7 +150,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
     verifyKeyspace(col.keyspace.value)
     try {
       verifyKeyspace(col.keyspace.value)
-      val result = client.get(ByteBuffer.wrap(col.key.value.getBytes("UTF-8")), col.columnPath, consistency)
+      val result = client.get(col.key.value, col.columnPath, consistency)
       Some(col.convertGetResult(result))
     } catch {
       case nfe: NotFoundException => None
