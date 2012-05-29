@@ -418,7 +418,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
       ops.foreach {
         (op) =>
           verifyOperation(op)
-          val familyToMutations = getOrElse(keyToFamilyMutations, ByteBuffer.wrap(op.key.value.getBytes("UTF-8")), new HashMap[String, JList[Mutation]]())
+          val familyToMutations = getOrElse(keyToFamilyMutations, op.key.value, new HashMap[String, JList[Mutation]]())
           val mutationList = getOrElse(familyToMutations, op.family.value, new ArrayList[Mutation]())
           mutationList.add(op.mutation)
       }
