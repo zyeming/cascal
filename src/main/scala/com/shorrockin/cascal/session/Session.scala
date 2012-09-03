@@ -214,7 +214,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
       val keyspace = firstContainer.keyspace
       verifyKeyspace(keyspace.value)
 
-      val keyStrings = containers.map {container => ByteBuffer.wrap(container.key.value.array)}
+      val keyStrings = containers.map {container => container.key.value)}
       val result = client.multiget_count(keyStrings, firstContainer.columnParent, predicate.slicePredicate, consistency)
       
       val containersByKey = containers.map {container =>
@@ -309,7 +309,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
     if (containers.size > 0) detect {
       val firstContainer = containers(0)
       val keyspace = firstContainer.keyspace
-      val keyStrings = containers.map {container => ByteBuffer.wrap(container.key.value.array)}
+      val keyStrings = containers.map {container => container.key.value}
       verifyKeyspace(keyspace.value)
       val results = client.multiget_slice(keyStrings, firstContainer.columnParent, predicate.slicePredicate, consistency)
 
