@@ -214,7 +214,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
       val keyspace = firstContainer.keyspace
       verifyKeyspace(keyspace.value)
 
-      val keyStrings = containers.map {container => container.key.value)}
+      val keyStrings = containers.map {container => container.key.value}
       val result = client.multiget_count(keyStrings, firstContainer.columnParent, predicate.slicePredicate, consistency)
       
       val containersByKey = containers.map {container =>
