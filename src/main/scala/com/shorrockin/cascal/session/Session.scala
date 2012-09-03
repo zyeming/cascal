@@ -214,7 +214,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
       val keyspace = firstContainer.keyspace
       verifyKeyspace(keyspace.value)
 
-      val keyStrings = containers.map {container => ByteBuffer.wrap(container.key.value.getBytes("UTF-8"))}
+      val keyStrings = containers.map {container => ByteBuffer.wrap(container.key.value.array)}
       val result = client.multiget_count(keyStrings, firstContainer.columnParent, predicate.slicePredicate, consistency)
       
       val containersByKey = containers.map {container =>
@@ -309,7 +309,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
     if (containers.size > 0) detect {
       val firstContainer = containers(0)
       val keyspace = firstContainer.keyspace
-      val keyStrings = containers.map {container => ByteBuffer.wrap(container.key.value.getBytes("UTF-8"))}
+      val keyStrings = containers.map {container => ByteBuffer.wrap(container.key.value.array)}
       verifyKeyspace(keyspace.value)
       val results = client.multiget_slice(keyStrings, firstContainer.columnParent, predicate.slicePredicate, consistency)
 
@@ -319,7 +319,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
         })
 
       // def locate(key: String) = (containers.find {_.key.value.equals(key)}).get
-      def locate(key: String) = containersByKey(key)
+      def locate(key: ByteBuffer) = containersByKey(key)
 
       convertMap(results).map { (tuple) =>
         val key   = locate(tuple._1)
