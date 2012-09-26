@@ -19,7 +19,10 @@ object UUID {
   def apply() = JavaUUID.fromString(new EaioUUID().toString());
 
   def apply(data: ByteBuffer):JavaUUID = {
-    apply(data.array)
+    //first get the uuid 16 bytes from ByteBuffer
+    val uuid = new Array[Byte](data.remaining())
+    data.get(uuid)
+    apply(uuid.array)
   }
   /**
    * returns a new uuid based on the specified string

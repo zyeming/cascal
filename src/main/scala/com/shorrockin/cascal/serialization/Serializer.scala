@@ -62,7 +62,7 @@ object StringSerializer extends Serializer[String] {
 }
 
 object UUIDSerializer extends Serializer[UUID] {
-  def fromByteBuffer(bytes:ByteBuffer) = UUIDUtils(bytes.array)
+  def fromByteBuffer(bytes:ByteBuffer) = UUIDUtils(bytes)
   def toString(uuid:UUID) = uuid.toString
   def fromString(str:String) = UUID.fromString(str)
 
