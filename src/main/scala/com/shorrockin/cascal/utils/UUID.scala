@@ -21,7 +21,10 @@ object UUID {
   def apply(data: ByteBuffer):JavaUUID = {
     //first get the uuid 16 bytes from ByteBuffer
     val uuid = new Array[Byte](data.remaining())
+    //reset the pos, then can process this another time
+    val pos = data.position()
     data.get(uuid)
+    data.position(pos)
     apply(uuid.array)
   }
   /**
