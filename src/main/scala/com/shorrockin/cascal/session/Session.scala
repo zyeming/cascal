@@ -361,7 +361,22 @@ class Session(val host:Host, val defaultConsistency:Consistency, val noFramedTra
     mapBuilder.result
   }
 
+  /**
+   * performs a list on a key range in the specified column family. the predicate is applied
+   * with the provided consistency guaranteed. the key range may be a range of keys or a range
+   * of tokens. This list call is only available when using an order-preserving partition.
+   */
+  def list[ColumnType, ListType](family: ColumnFamily[Key[ColumnType, ListType]], range: ByteBufferKeyRange, predicate: Predicate, consistency: Consistency): Map[Key[ColumnType, ListType], ListType] = detect {
+    verifyKeyspace(family.keyspace.value)
+    val results = client.get_range_slices(family.columnParent, predicate.slicePredicate, range.cassandraRange, consistency)
+    var mapBuilder = LinkedHashMap.canBuildFrom[Key[ColumnType, ListType], ListType]()
 
+    convertList(results).foreach { (keyslice) =>
+      val key = (family \ keyslice.key)
+      mapBuilder += (key -> key.convertListResult(keyslice.columns))
+    }
+    mapBuilder.result
+  }
   /**
    * performs a key-range list without any predicate
    */

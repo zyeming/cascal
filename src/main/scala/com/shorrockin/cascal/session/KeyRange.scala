@@ -2,6 +2,8 @@ package com.shorrockin.cascal.session
 
 import org.apache.cassandra.thrift.{KeyRange => CassKeyRange}
 import java.nio.charset.Charset
+import java.nio.ByteBuffer
+
 
 /**
  * a key range is used when you list by keys to specified the start and end
@@ -28,6 +30,14 @@ case class KeyRange(start:String, end:String, limit:Int) extends CassKeyRange {
   }
 }
 
+case class ByteBufferKeyRange(start: ByteBuffer, end: ByteBuffer, limit: Int) extends CassKeyRange {
+  lazy val cassandraRange = {
+    val range = new CassKeyRange(limit)
+    range.setStart_key(start)
+    range.setEnd_key(end)
+    range
+  }
+}
 
 /**
  * a key range is used when you list by keys to specified the start and end
