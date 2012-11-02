@@ -1,11 +1,19 @@
 package com.shorrockin.cascal.session
 
 import org.apache.commons.pool.PoolableObjectFactory
-import org.apache.commons.pool.impl.{GenericObjectPoolFactory, GenericObjectPool}
+import org.apache.commons.pool.impl.{ GenericObjectPoolFactory, GenericObjectPool }
 import com.shorrockin.cascal.utils.Logging
-import com.shorrockin.cascal.jmx.CascalStatistics
 import com.shorrockin.cascal.model._
 import scala.collection.Map
+import me.prettyprint.cassandra.service.CassandraHostConfigurator
+import collection.JavaConverters._
+import me.prettyprint.cassandra.service.OperationType
+import org.apache.cassandra.thrift.Cassandra
+import me.prettyprint.cassandra.service.ExceptionsTranslatorImpl
+import scala.collection.mutable.HashSet
+import me.prettyprint.cassandra.connection.factory.HClientFactoryProvider
+import me.prettyprint.cassandra.connection.HConnectionManager
+import me.prettyprint.hector.api.factory.HFactory
 
 /**
  * a session pool which maintains a collection of open sessions so that
@@ -19,275 +27,134 @@ import scala.collection.Map
  *
  * @author Chris Shorrock
  */
-class SessionPool(val hosts:Seq[Host], val params:PoolParams, val defaultConsistency:Consistency, framedTransport:Boolean) extends SessionTemplate {
-  def this(hosts:Seq[Host], params:PoolParams, consistency:Consistency) = this(hosts, params, consistency, false)
-  def this(hosts:Seq[Host], params:PoolParams) = this(hosts, params, Consistency.One, false)
+class SessionPool(hostconfig: CassandraHostConfigurator, val defaultConsistency: Consistency) extends SessionTemplate with MetaInfo {
+  hostconfig.setAutoDiscoverHosts(true)
 
-  CascalStatistics.register(this)
-
-  private val pool = {
-    val factory = new GenericObjectPoolFactory(SessionFactory,
-                                               params.maxActive,
-                                               params.exhaustionPolicy.value,
-                                               params.maxWait,
-                                               params.maxIdle,
-                                               params.minIdle,
-                                               params.testOnBorrow,
-                                               params.testOnReturn,
-                                               params.timeBetweenEvictionsRunsMillis,
-                                               params.numTestsPerEvictionRuns,
-                                               params.minEvictableIdleTimeMillis,
-                                               params.testWhileIdle,
-                                               params.softMinEvictableIdleTimeMillis,
-                                               params.lifo)
-    factory.createPool
-  }
-
+  private val cluster = HFactory.getOrCreateCluster(describeClusterName, hostconfig)
 
   /**
    * closes this pool and releases any resources available to it.
    */
   def close() {
-    pool.close
-    CascalStatistics.unregister(this)
+    HFactory.shutdownCluster(cluster)
   }
 
+  private def describeClusterName(): String = {
+    hostconfig.setMaxActive(2)
+    val cf = HClientFactoryProvider.createFactory(hostconfig)
+    val simplepool = hostconfig.getLoadBalancingPolicy.createConnection(cf, hostconfig.buildCassandraHosts.first)
+    val client = simplepool.borrowClient
+    try {
+      client.getCassandra.describe_cluster_name
+    } catch {
+      case e => ""
+    } finally {
+      simplepool.releaseClient(client)
+      simplepool.shutdown
+    }
+  }
 
-  /**
-   * clears any idle objects sitting in the pool (optional operation)
-   */
-  def clear() { pool.clear }
+  def status(): List[String] = cluster.getConnectionManager.getStatusPerPool.asScala.toList
 
+  lazy val clusterName = exec(OperationType.META_READ) { client => client.describe_cluster_name }
 
-  /**
-   * returns the number of active session connections.
-   */
-  def active = pool.getNumActive
+  lazy val version = exec(OperationType.META_READ) { client => client.describe_version }
 
+  lazy val keyspaces: Seq[String] = exec(OperationType.META_READ) { client =>
+    client.describe_keyspaces.asScala map { _.name }
+  }
 
-  /**
-   * returns the number of idle session connections
-   */
-  def idle = pool.getNumIdle
-
+  lazy val keyspaceDescriptors: Set[Tuple3[String, String, String]] = exec(OperationType.META_READ) { client =>
+    var keyspaceDesc: HashSet[Tuple3[String, String, String]] = new HashSet[Tuple3[String, String, String]]
+    client.describe_keyspaces.asScala foreach {
+      space =>
+        val familyMap = space.cf_defs
+        familyMap.asScala foreach {
+          family =>
+            keyspaceDesc = keyspaceDesc + ((space.name, family.name, family.column_type))
+            ()
+        }
+    }
+    keyspaceDesc.toSet
+  }
 
   /**
    * used to retrieve a session and perform a function using that
    * function. This function will clean up the borrowed object after
    * it has finished. You do not need to manually call "return"
    */
-  def borrow[E](f:(Session) => E):E = {
-    var session:Session = null
-
-    try {
-      session = checkout
-      val before = System.currentTimeMillis
-      val out = f(session)
-      CascalStatistics.usage(session.host, System.currentTimeMillis - before)
-      out
-    } catch {
-      case t:Throwable => {
-        if (null != session) CascalStatistics.usageError(session.host)
-        throw t
-      }
-    } finally {
-      if (null != session) checkin(session)
+  def borrow[E](opType: OperationType)(f: (Session) => E): E = {
+    exec(opType) { client =>
+      f(new Session(client, this, defaultConsistency))
     }
   }
 
+  def truncate(cfname: String) = borrow(OperationType.META_WRITE) { _.truncate(cfname) }
 
-  /**
-   * retrieves a session. Once the caller has finished with the
-   * session it must be returned to the pool. failure to do so
-   * will result your pool shedding a tear.
-   */
-  def checkout:Session = pool.borrowObject.asInstanceOf[Session]
+  def get[ResultType, ValueType](col: Gettable[ResultType, ValueType], consistency: Consistency): Option[ResultType] = borrow(OperationType.READ) { _.get(col, consistency) }
 
+  def get[ResultType, ValueType](col: Gettable[ResultType, ValueType]): Option[ResultType] = borrow(OperationType.READ) { _.get(col) }
 
-  /**
-   * returns the session back to the pool. only necessary when a sessio
-   * is retrieved through the checkout methad.
-   */
-  def checkin(session:Session) = pool.returnObject(session)
+  def insert[E](col: Column[E], consistency: Consistency): Column[E] = borrow(OperationType.WRITE) { _.insert(col, consistency) }
 
+  def insert[E](col: Column[E]): Column[E] = borrow(OperationType.WRITE) { _.insert(col) }
 
-  /**
-   * used to create sessions
-   */
-  private object SessionFactory extends PoolableObjectFactory[Session] with Logging {
-    // instead of randomly choosing a host we'll attempt to round-robin them, may not
-    // be completely round robin with multiple threads but it should provide a more
-    // even spread than something random.
-    var lastHostUsed = 0
+  def add[E](col: CounterColumn[E], consistency: Consistency = defaultConsistency) = borrow(OperationType.WRITE) { _.add(col, consistency) }
 
-    def next(current:Int) = (current + 1) % hosts.size
-    def makeObject:Session = makeSession(next(lastHostUsed), 0)
+  def count(container: ColumnContainer[_, _], consistency: Consistency): Int = borrow(OperationType.READ) { _.count(container, consistency) }
 
-    def makeSession(hostIndex:Int, count:Int):Session = {
-      if (count < hosts.size) {
-        lastHostUsed = hostIndex
-        val host = hosts(hostIndex)
+  def count(container: ColumnContainer[_, _]): Int = borrow(OperationType.READ) { _.count(container) }
 
-        try {
-          log.debug("attempting to create connection to: " + host)
-          val session = new Session(host.address, host.port, host.timeout, defaultConsistency, framedTransport)
-          session.open
-          CascalStatistics.creation(host)
-          session
-        } catch {
-          case e:Exception =>
-            log.warn("encountered exception while creating connection(" + host + "), will attempt next host in configuration", e)
-            CascalStatistics.creationError(host)
-            makeSession(next(hostIndex), count + 1)
-        }
-      } else {
-        throw new IllegalStateException("unable to connect to any of the hosts in the pool")
-      }
-    }
+  def count[ColumnType, ResultType](containers: Seq[ColumnContainer[ColumnType, ResultType]], predicate: Predicate = EmptyPredicate, consistency: Consistency = defaultConsistency): Map[ColumnContainer[ColumnType, ResultType], Int] = borrow((OperationType.READ)) { _.count(containers, predicate, consistency) }
 
-    def activateObject(session:Session):Unit = {}
+  def remove(container: ColumnContainer[_, _], consistency: Consistency): Unit = borrow(OperationType.WRITE) { _.remove(container, consistency) }
 
-    def destroyObject(session:Session):Unit = session.close
+  def remove(container: ColumnContainer[_, _]): Unit = borrow(OperationType.WRITE) { _.remove(container) }
 
-    def validateObject(session:Session):Boolean = session.isOpen && !session.hasError
+  def remove(column: Column[_], consistency: Consistency): Unit = borrow(OperationType.WRITE) { _.remove(column, consistency) }
 
-    def passivateObject(session:Session):Unit = {}
-  }
-
-
-  def clusterName:String = borrow { _.clusterName }
-
-  def version:String = borrow { _.version }
-
-  def keyspaces:Seq[String] = borrow { _.keyspaces }
-
-  def truncate(cfname: String) = borrow { _.truncate(cfname) }
-  
-  def get[ResultType, ValueType](col:Gettable[ResultType, ValueType], consistency:Consistency):Option[ResultType] = borrow { _.get(col, consistency) }
-
-  def get[ResultType, ValueType](col:Gettable[ResultType, ValueType]):Option[ResultType] = borrow { _.get(col) }
-
-  def insert[E](col:Column[E], consistency:Consistency):Column[E] = borrow { _.insert(col, consistency) }
-
-  def insert[E](col:Column[E]):Column[E] = borrow { _.insert(col) }
-
-  def add[E](col: CounterColumn[E], consistency: Consistency = defaultConsistency) = borrow { _.add(col, consistency) }
-  
-  def count(container:ColumnContainer[_ ,_], consistency:Consistency):Int = borrow { _.count(container, consistency) }
-
-  def count(container:ColumnContainer[_, _]):Int = borrow { _.count(container) }
-
-  def count[ColumnType, ResultType](containers: Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate = EmptyPredicate, consistency: Consistency = defaultConsistency): Map[ColumnContainer[ColumnType, ResultType], Int] = borrow { _.count(containers, predicate, consistency) }
-  
-  def remove(container:ColumnContainer[_, _], consistency:Consistency):Unit = borrow { _.remove(container, consistency) }
-
-  def remove(container:ColumnContainer[_, _]):Unit = borrow { _.remove(container) }
-
-  def remove(column:Column[_], consistency:Consistency):Unit = borrow { _.remove(column, consistency) }
-
-  def remove(column:Column[_]):Unit = borrow { _.remove(column) }
+  def remove(column: Column[_]): Unit = borrow(OperationType.WRITE) { _.remove(column) }
 
   /**
    * removes the specified column container
    */
-  def remove(column: CounterColumn[_], consistency: Consistency = defaultConsistency): Unit = borrow { _.remove(column, consistency) }
+  def remove(column: CounterColumn[_], consistency: Consistency = defaultConsistency): Unit = borrow(OperationType.WRITE) { _.remove(column, consistency) }
 
-  
-  def list[ResultType](container:ColumnContainer[_, ResultType], predicate:Predicate, consistency:Consistency):ResultType = borrow { _.list(container, predicate, consistency) }
+  def list[ResultType](container: ColumnContainer[_, ResultType], predicate: Predicate, consistency: Consistency): ResultType = borrow(OperationType.READ) { _.list(container, predicate, consistency) }
 
-  def list[ResultType](container:ColumnContainer[_, ResultType]):ResultType = borrow { _.list(container) }
+  def list[ResultType](container: ColumnContainer[_, ResultType]): ResultType = borrow(OperationType.READ) { _.list(container) }
 
-  def list[ResultType](container:ColumnContainer[_, ResultType], predicate:Predicate):ResultType = borrow { _.list(container, predicate) }
+  def list[ResultType](container: ColumnContainer[_, ResultType], predicate: Predicate): ResultType = borrow(OperationType.READ) { _.list(container, predicate) }
 
-  def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate, consistency:Consistency):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = borrow { _.list(containers, predicate, consistency) }
+  def list[ColumnType, ResultType](containers: Seq[ColumnContainer[ColumnType, ResultType]], predicate: Predicate, consistency: Consistency): Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = borrow(OperationType.READ) { _.list(containers, predicate, consistency) }
 
-  def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]]):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = borrow { _.list(containers) }
+  def list[ColumnType, ResultType](containers: Seq[ColumnContainer[ColumnType, ResultType]]): Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = borrow(OperationType.READ) { _.list(containers) }
 
-  def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = borrow { _.list(containers, predicate) }
+  def list[ColumnType, ResultType](containers: Seq[ColumnContainer[ColumnType, ResultType]], predicate: Predicate): Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = borrow(OperationType.READ) { _.list(containers, predicate) }
 
-  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange, predicate:Predicate, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = borrow { _.list(family, range, predicate, consistency) }
+  def list[ColumnType, ListType](family: ColumnFamily[Key[ColumnType, ListType]], range: KeyRange, predicate: Predicate, consistency: Consistency): Map[Key[ColumnType, ListType], ListType] = borrow(OperationType.READ) { _.list(family, range, predicate, consistency) }
 
-  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:ByteBufferKeyRange, predicate:Predicate, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = borrow { _.list(family, range, predicate, consistency) }
+  def list[ColumnType, ListType](family: ColumnFamily[Key[ColumnType, ListType]], range: ByteBufferKeyRange, predicate: Predicate, consistency: Consistency): Map[Key[ColumnType, ListType], ListType] = borrow(OperationType.READ) { _.list(family, range, predicate, consistency) }
 
-  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = borrow { _.list(family, range, consistency) }
+  def list[ColumnType, ListType](family: ColumnFamily[Key[ColumnType, ListType]], range: KeyRange, consistency: Consistency): Map[Key[ColumnType, ListType], ListType] = borrow(OperationType.READ) { _.list(family, range, consistency) }
 
-  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange):Map[Key[ColumnType, ListType], ListType] = borrow { _.list(family, range) }
+  def list[ColumnType, ListType](family: ColumnFamily[Key[ColumnType, ListType]], range: KeyRange): Map[Key[ColumnType, ListType], ListType] = borrow(OperationType.READ) { _.list(family, range) }
 
-  def list[ColumnType, ListType](query: IndexQuery): Map[StandardKey, Seq[Column[StandardKey]]] = borrow { _.list(query) }
-  
-  def list[ColumnType, ListType](query: IndexQuery, predicate: Predicate, consistency: Consistency): Map[StandardKey, Seq[Column[StandardKey]]] = borrow { _.list(query, predicate, consistency) }
-    
-  def batch(ops:Seq[Operation], consistency:Consistency):Unit = borrow { _.batch(ops, consistency) }
+  def list[ColumnType, ListType](query: IndexQuery): Map[StandardKey, Seq[Column[StandardKey]]] = borrow(OperationType.READ) { _.list(query) }
 
-  def batch(ops:Seq[Operation]):Unit = borrow { _.batch(ops) }
+  def list[ColumnType, ListType](query: IndexQuery, predicate: Predicate, consistency: Consistency): Map[StandardKey, Seq[Column[StandardKey]]] = borrow(OperationType.READ) { _.list(query, predicate, consistency) }
 
-  def batchWithRetry(ops: Seq[Operation], consistency: Consistency): Unit = borrow { _.batchWithRetry(ops, consistency) }
+  def batch(ops: Seq[Operation], consistency: Consistency): Unit = borrow(OperationType.WRITE) { _.batch(ops, consistency) }
 
-  def batchWithRetry(ops: Seq[Operation]): Unit = borrow { _.batchWithRetry(ops) }
-}
+  def batch(ops: Seq[Operation]): Unit = borrow(OperationType.WRITE) { _.batch(ops) }
 
+  def batchWithRetry(ops: Seq[Operation], consistency: Consistency): Unit = borrow(OperationType.WRITE) { _.batchWithRetry(ops, consistency) }
 
-/**
- * case class used when configuring the session pool
- */
-case class Host(address:String, port:Int, timeout:Int) {
-  def ::(other:Host) = other :: this :: Nil
-}
+  def batchWithRetry(ops: Seq[Operation]): Unit = borrow(OperationType.WRITE) { _.batchWithRetry(ops) }
 
-
-/**
- * defines an exhaustion policy used by the cassandra system.
- */
-trait ExhaustionPolicy {
-  def value:Byte
-}
-
-
-/**
- * defines the possible values for the exhaustion policy.
- */
-object ExhaustionPolicy {
-  val Fail = new ExhaustionPolicy { val value = GenericObjectPool.WHEN_EXHAUSTED_FAIL }
-  val Grow = new ExhaustionPolicy { val value = GenericObjectPool.WHEN_EXHAUSTED_GROW }
-  val Block = new ExhaustionPolicy { val value = GenericObjectPool.WHEN_EXHAUSTED_BLOCK }
-}
-
-
-/**
- * this class tempts me to upgrade to 2.8. until then it describes, in the
- * most verbose fashion possible, all the parameters that can be passed into
- * the session pool.
- *
- * @author Chris Shorrock
- */
-case class PoolParams(maxActive:Int,
-                      exhaustionPolicy:ExhaustionPolicy,
-                      maxWait:Long,
-                      maxIdle:Int,
-                      minIdle:Int,
-                      testOnBorrow:Boolean,
-                      testOnReturn:Boolean,
-                      timeBetweenEvictionsRunsMillis:Long,
-                      numTestsPerEvictionRuns:Int,
-                      minEvictableIdleTimeMillis:Long,
-                      testWhileIdle:Boolean,
-                      softMinEvictableIdleTimeMillis:Long,
-                      lifo:Boolean) {
-  def this(maxActive:Int,
-           exhaustionPolicy:ExhaustionPolicy,
-           maxWait:Long,
-           maxIdle:Int,
-           minIdle:Int) = this(maxActive,
-                               exhaustionPolicy,
-                               maxWait,
-                               maxIdle,
-                               minIdle,
-                               true,
-                               true,
-                               GenericObjectPool.DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS,
-                               GenericObjectPool.DEFAULT_NUM_TESTS_PER_EVICTION_RUN,
-                               GenericObjectPool.DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS ,
-                               GenericObjectPool.DEFAULT_TEST_WHILE_IDLE,
-                               GenericObjectPool.DEFAULT_SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS,
-                               true)
+  def exec[T](opType: OperationType)(f: Cassandra.Client => T): T = {
+    val op = new HOperation(opType, f)
+    cluster.getConnectionManager.operateWithFailover(op)
+    op.getResult
+  }
 }

@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(
 	"com.eaio.uuid" % "uuid" % "3.2",
 	"org.slf4j" % "slf4j-api" % "1.6.4",
 	"commons-pool" % "commons-pool" % "1.6",
-	"junit" % "junit" % "4.10" % "test"
+	"junit" % "junit" % "4.10" % "test",
+	"org.hectorclient" % "hector-core" % "1.1-1"
   )
 	
 libraryDependencies += "com.novocode" % "junit-interface" % "0.7" % "test->default"

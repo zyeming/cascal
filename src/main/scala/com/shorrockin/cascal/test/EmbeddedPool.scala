@@ -4,30 +4,33 @@ import org.apache.cassandra.thrift.CassandraDaemon
 import org.apache.cassandra.config.DatabaseDescriptor
 import java.io.File
 import scala.collection.JavaConversions._
-import java.util.{Collection => JCollection}
+import java.util.{ Collection => JCollection }
 import java.net.ConnectException
-import org.apache.thrift.transport.{TTransportException, TSocket}
+import org.apache.thrift.transport.{ TTransportException, TSocket }
 import com.shorrockin.cascal.session._
-import com.shorrockin.cascal.utils.{Utils, Logging}
-import org.apache.cassandra.config.{CFMetaData, KSMetaData}
+import com.shorrockin.cascal.utils.{ Utils, Logging }
+import org.apache.cassandra.config.{ CFMetaData, KSMetaData }
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.sun.jmx.snmp.IPAcl.Host
+import me.prettyprint.cassandra.service.OperationType
+import me.prettyprint.cassandra.service.CassandraHostConfigurator
 
 /**
  * trait which mixes in the functionality necessary to embed
  * cassandra into a unit test
  */
 trait EmbeddedPool extends Logging with Schema {
-  
-  def borrow(f:(Session) => Unit) = {
+
+  def borrow(f: (Session) => Unit) = {
     init
-    EmbeddedCassandraServer.pool.borrow(f)
+    EmbeddedCassandraServer.pool.borrow(OperationType.READ)(f)
   }
-  
+
   def init = {
     EmbeddedCassandraServer.init(timeout, ksMetaData)
   }
-  
+
   def shutdown = {
     EmbeddedCassandraServer.shutdown
   }
@@ -42,7 +45,7 @@ object EmbeddedCassandraServer extends Logging {
 
   var pool: SessionPool = null
   var daemon = new CassandraDaemonThread
-  
+
   def init(timeout: Int, ksMetaData: KSMetaData) = synchronized {
     if (!initialized) {
       val homeDirectory = new File("target/cassandra.home.unit-tests")
@@ -61,13 +64,13 @@ object EmbeddedCassandraServer extends Logging {
 
       System.setProperty("cassandra.config", toURI(homeDirectory.getCanonicalPath + fileSep + "cassandra.yaml").toString)
       System.setProperty("log4j.configuration", toURI(homeDirectory.getCanonicalPath + fileSep + "log4j.properties").toString);
-      System.setProperty("cassandra-foreground","true");
+      System.setProperty("cassandra-foreground", "true");
 
       log.debug("creating data file and log location directories")
       DatabaseDescriptor.getAllDataFileLocations.foreach { (file) => new File(file).mkdirs }
-      
+
       loadSchema(ksMetaData)
-      
+
       daemon.start
 
       // try to make sockets until the server opens up - there has to be a better
@@ -80,28 +83,27 @@ object EmbeddedCassandraServer extends Logging {
           opened = true
           socket.close()
         } catch {
-          case e:TTransportException => /* ignore */
-          case e:ConnectException => /* ignore */
+          case e: TTransportException => /* ignore */
+          case e: ConnectException => /* ignore */
         }
       }
+      val config = new CassandraHostConfigurator("localhost")
+      config.setMaxActive(10)
+      pool = new SessionPool(config, Consistency.One)
 
-      val hosts  = Host("localhost", DatabaseDescriptor.getRpcPort, timeout) :: Nil
-      val params = new PoolParams(10, ExhaustionPolicy.Fail, timeout + 100, 6, 2)
-      pool = new SessionPool(hosts, params, Consistency.One)
-      
       initialized = true
     }
   }
-    
-  private def resource(str:String) = classOf[EmbeddedPool].getResourceAsStream(str)
-  
+
+  private def resource(str: String) = classOf[EmbeddedPool].getResourceAsStream(str)
+
   private def loadSchema(ksMetaData: KSMetaData) = {
     val ksList = new java.util.ArrayList[KSMetaData]()
     ksList.add(ksMetaData)
     import org.apache.cassandra.config.Schema
     Schema.instance.load(ksList)
   }
-  
+
   def shutdown {
     daemon.close
   }
@@ -117,13 +119,13 @@ class CassandraDaemonThread extends Thread("CassandraDaemonThread") with Logging
    * starts the server and blocks until it has
    * completed booting up.
    */
-  override def run:Unit = {
+  override def run: Unit = {
     log.debug("starting cassandra daemon")
     daemon.activate
     log.debug("Cassandra daemon started")
   }
 
-  def close():Unit = {
+  def close(): Unit = {
     log.debug("instructing cassandra deamon to shut down")
     daemon.deactivate
     log.debug("blocking on cassandra shutdown")
