@@ -27,9 +27,11 @@ import me.prettyprint.hector.api.factory.HFactory
  *
  * @author Chris Shorrock
  */
-class SessionPool(hostconfig: CassandraHostConfigurator, val defaultConsistency: Consistency) extends SessionTemplate with MetaInfo {
+class SessionPool(hosts: String, maxActive: Int, timeout: Int, val defaultConsistency: Consistency) extends SessionTemplate with MetaInfo {
+  private val hostconfig = new CassandraHostConfigurator(hosts)
   hostconfig.setAutoDiscoverHosts(true)
-
+  hostconfig.setMaxActive(maxActive)
+  hostconfig.setCassandraThriftSocketTimeout(timeout)
   private val cluster = HFactory.getOrCreateCluster(describeClusterName, hostconfig)
 
   /**
@@ -40,6 +42,7 @@ class SessionPool(hostconfig: CassandraHostConfigurator, val defaultConsistency:
   }
 
   private def describeClusterName(): String = {
+    val hostconfig = new CassandraHostConfigurator(hosts)
     hostconfig.setMaxActive(2)
     val cf = HClientFactoryProvider.createFactory(hostconfig)
     val simplepool = hostconfig.getLoadBalancingPolicy.createConnection(cf, hostconfig.buildCassandraHosts.first)

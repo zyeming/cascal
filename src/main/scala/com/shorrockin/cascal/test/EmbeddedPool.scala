@@ -87,9 +87,7 @@ object EmbeddedCassandraServer extends Logging {
           case e: ConnectException => /* ignore */
         }
       }
-      val config = new CassandraHostConfigurator("localhost")
-      config.setMaxActive(10)
-      pool = new SessionPool(config, Consistency.One)
+      pool = new SessionPool("localhost", 50, 5000, Consistency.One)
 
       initialized = true
     }
