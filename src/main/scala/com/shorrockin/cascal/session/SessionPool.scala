@@ -27,18 +27,22 @@ import me.prettyprint.hector.api.factory.HFactory
  *
  * @author Chris Shorrock
  */
-class SessionPool(hosts: String, maxActive: Int, timeout: Int, val defaultConsistency: Consistency) extends SessionTemplate with MetaInfo {
+class SessionPool(hosts: String, maxActive: Int, timeout: Int, val defaultConsistency:Consistency, isCronTask: Boolean = false) extends SessionTemplate with MetaInfo {
   private val hostconfig = new CassandraHostConfigurator(hosts)
   hostconfig.setAutoDiscoverHosts(true)
   hostconfig.setMaxActive(maxActive)
   hostconfig.setCassandraThriftSocketTimeout(timeout)
-  private val cluster = HFactory.getOrCreateCluster(describeClusterName, hostconfig)
+  private val cluster = HFactory.getOrCreateCluster(if (!isCronTask) describeClusterName else describeCronTaskClusterName, hostconfig)
 
   /**
    * closes this pool and releases any resources available to it.
    */
   def close() {
     HFactory.shutdownCluster(cluster)
+  }
+
+  private def describeCronTaskClusterName(): String = {
+    describeClusterName + "CronTask"
   }
 
   private def describeClusterName(): String = {
