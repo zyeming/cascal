@@ -162,7 +162,7 @@ class SessionPool(hosts: String, maxActive: Int, timeout: Int, val defaultConsis
 
     def exec[T](opType: OperationType)(f: Cassandra.Client => T): T = {
         val op = new HOperation(opType, f)
-        if (opType == OperationType.READ) op.failoverPolicy = FailoverPolicy.ON_FAIL_TRY_ONE_NEXT_AVAILABLE
+        if (opType == OperationType.READ) op.failoverPolicy = FailoverPolicy.ON_FAIL_TRY_ALL_AVAILABLE
         cluster.getConnectionManager.operateWithFailover(op)
         op.getResult
     }
